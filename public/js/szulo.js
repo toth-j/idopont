@@ -27,21 +27,19 @@ tanuloAdatokForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const tanuloNeve = formTanuloNeveInput.value.trim();
   const oktatasiAzonosito = formOktatasiAzonositoInput.value.trim();
-
-  if (tanuloNeve && oktatasiAzonosito && oktatasiAzonosito.length === 11 && /^\d+$/.test(oktatasiAzonosito)) {
-    aktualisTanuloNeve = tanuloNeve;
-    aktualisOktatasiAzonosito = oktatasiAzonosito;
-
-    tanuloAdatokSection.style.display = 'none';
-    tanarokListaSection.style.display = 'block';
-    foglalasaimSection.style.display = 'block';
-    foglalasaimTanuloInfoSpan.textContent = `${aktualisTanuloNeve} (${aktualisOktatasiAzonosito})`;
-
-    await loadSajatFoglalasok(aktualisOktatasiAzonosito); // Ezt előbb, hogy tudjuk, mely tanárok foglaltak
-    await loadTanarok();
-  } else {
+  if (!tanuloNeve || !oktatasiAzonosito || oktatasiAzonosito.length !== 11 || !/^\d+$/.test(oktatasiAzonosito)) {
     alert('Kérjük, adja meg helyesen a tanuló nevét és a 11 jegyű oktatási azonosítóját!');
+    return;
   }
+  aktualisTanuloNeve = tanuloNeve;
+  aktualisOktatasiAzonosito = oktatasiAzonosito;
+  tanuloAdatokSection.style.display = 'none';
+  tanarokListaSection.style.display = 'block';
+  foglalasaimSection.style.display = 'block';
+  foglalasaimTanuloInfoSpan.textContent = `${aktualisTanuloNeve} ${aktualisOktatasiAzonosito}`;
+
+  await loadSajatFoglalasok(aktualisOktatasiAzonosito); // Ezt előbb, hogy tudjuk, mely tanárok foglaltak
+  await loadTanarok();
 });
 
 // Tanárok betöltése
@@ -67,7 +65,7 @@ async function loadTanarok() {
         tanarElem.addEventListener('click', (e) => {
           e.preventDefault();
           loadFogadoora(tanar.tanarID);
-          // Aktív elem jelölése
+          // Aktív elem jelölése (először eltávolítjuk az aktív osztályt az összes elemről, utána hozzáadjuk az aktuálishoz)
           document.querySelectorAll('#tanarok-lista .list-group-item-action').forEach(item => item.classList.remove('active'));
           tanarElem.classList.add('active');
         });
@@ -110,7 +108,7 @@ async function loadFogadoora(tanarID) {
         idopontokListaDiv.appendChild(gomb);
       });
     } else {
-      idopontokListaDiv.innerHTML = '<p>Nincsenek elérhető időpontok vagy nincs fogadóóra definiálva.</p>';
+      idopontokListaDiv.innerHTML = '<p>Nincsenek elérhető időpontok.</p>';
     }
     fogadooraSection.style.display = 'block';
   } catch (error) {
@@ -143,6 +141,7 @@ async function kezdemenyezFoglalas(tanarID, tanarNev, idosav) {
       loadFogadoora(aktivTanarId); // Frissítjük az aktuális tanár nézetét
     }
     await loadSajatFoglalasok(aktualisOktatasiAzonosito); // Foglalásaim frissítése
+    await loadTanarok(); // Tanárok listájának frissítése a foglalt státuszok miatt
   } catch (error) {
     alert(`Hiba: ${error.message}`);
   }
@@ -151,7 +150,7 @@ async function kezdemenyezFoglalas(tanarID, tanarNev, idosav) {
 async function loadSajatFoglalasok(oktatasiAzonosito) {
   sajatFoglalasokDiv.innerHTML = '<p>Keresés...</p>';
   let talaltFoglalasok = [];
-  foglaltTanarIdk.clear(); // Ürítjük az előző tanulóhoz tartozó foglalt tanárok listáját
+  foglaltTanarIdk.clear(); // Ürítjük az előző tanulóhoz tartozó foglalt tanárok halmazát
 
   try {
     if (tanarokCache.length === 0) { // Ha még nem töltődtek be a tanárok
@@ -222,9 +221,10 @@ async function cancelFoglalas(tanarID, oktatasiAzonosito) {
       const errorData = await response.json().catch(() => ({ hiba: 'Ismeretlen hiba' }));
       throw new Error(errorData.hiba || `Lemondás sikertelen (státusz: ${response.status})`);
     }
-    await loadSajatFoglalasok(oktatasiAzonosito); // Frissítjük a listát
+    await loadSajatFoglalasok(oktatasiAzonosito); // Frissítjük a "Foglalásaim" listát és a foglaltTanarIdk halmazt
+    await loadTanarok(); // Frissítjük a tanárok listáját, hogy a lemondott tanár újra elérhető legyen
     if (aktivTanarId && String(aktivTanarId) === String(tanarID)) {
-      loadFogadoora(aktivTanarId); // Frissítjük az aktuális tanár nézetét is, ha az volt nyitva
+      loadFogadoora(aktivTanarId); // Frissítjük az aktuális tanár idősávjait is, ha az volt nyitva
     }
   } catch (error) {
     alert(`Hiba a lemondáskor: ${error.message}`);
