@@ -16,33 +16,12 @@ const db = new Database(dbPath);
 db.pragma('foreign_keys = ON');
 db.pragma('journal_mode = WAL');
 
-// Adatbázis séma inicializálása, ha szükséges
-db.exec(`
-      CREATE TABLE IF NOT EXISTS tanarok (
-          tanarID INTEGER PRIMARY KEY AUTOINCREMENT,
-          nev TEXT NOT NULL,
-          jelszoHash TEXT NOT NULL,
-          terem TEXT,
-          targyak TEXT
-      );
-      CREATE TABLE IF NOT EXISTS foglalasok (
-          foglalasID INTEGER PRIMARY KEY AUTOINCREMENT,
-          tanarID INTEGER NOT NULL,
-          idosav TEXT NOT NULL,
-          tanuloNeve TEXT NOT NULL,
-          oktatasiAzonosito TEXT NOT NULL,
-          FOREIGN KEY (tanarID) REFERENCES tanarok(tanarID) ON DELETE CASCADE,
-          UNIQUE (tanarID, idosav),
-          UNIQUE (tanarID, oktatasiAzonosito),
-          UNIQUE (oktatasiAzonosito, idosav)
-      );
-    `);
-
 const JWT_SECRET = process.env.JWT_SECRET;
 // Fogadóóra konfiguráció
 const FOGADOORA_START_IDO = process.env.START || "17:00";
 const FOGADOORA_END_IDO = process.env.END || "18:00";
 const FOGADOORA_HOSSZ_PERC = parseInt(process.env.HOSSZ) || 10;
+const FOGADOORA_DATUM = process.env.DATE;
 
 // Idősávok generálása
 function generateTimeSlots(startTimeStr, endTimeStr, intervalMinutes, existingBookings) {
@@ -91,7 +70,7 @@ function authenticateToken(req, res, next) {
 
 // --- Publikus végpontok ---
 
-// 0. Konfigurációs adatok (pl. dátum)
+// 0. Konfigurációs adatok (dátum)
 app.get('/api/config', (req, res) => {
   res.status(200).json({ date: process.env.DATE });
 });
@@ -141,6 +120,17 @@ app.post('/api/tanarok/:tanarID/foglalasok', (req, res) => {
   if (!idosav || !tanuloNeve || !oktatasiAzonosito) {
     return res.status(400).json({ hiba: 'Minden mező kitöltése kötelező (idosav, tanuloNeve, oktatasiAzonosito).' });
   }
+
+  // Ellenőrizzük, hogy a foglalás a fogadóóra napján vagy előtte történik-e
+  const maiDatum = new Date().toISOString().split('T')[0]; // YYYY-MM-DD formátum
+  if (!FOGADOORA_DATUM) {
+    console.error("Hiba: A FOGADOORA_DATUM nincs beállítva a .env fájlban.");
+    return res.status(500).json({ hiba: 'Szerver konfigurációs hiba: a fogadóóra dátuma nincs megadva.' });
+  }
+  if (maiDatum > FOGADOORA_DATUM) {
+    return res.status(403).json({ hiba: `Foglalás csak a fogadóóra napjáig lehetséges.` });
+  }
+
   // Ellenőrizzük, hogy a tanár létezik-e
   const tanarStmt = db.prepare('SELECT tanarID FROM tanarok WHERE tanarID = ?');
   const tanar = tanarStmt.get(tanarID);
@@ -170,7 +160,6 @@ app.post('/api/tanarok/:tanarID/foglalasok', (req, res) => {
       if (error.message.includes('foglalasok.oktatasiAzonosito, foglalasok.idosav')) {
         return res.status(409).json({ hiba: 'Ebben az időpontban már van egy másik foglalásod.' });
       }
-      return res.status(409).json({ hiba: 'A foglalás ütközik egy meglévővel.' }); // Általános ütközés
     }
     res.status(500).json({ hiba: 'Szerverhiba történt a foglalás során.' });
   }

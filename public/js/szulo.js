@@ -18,6 +18,7 @@ const sajatFoglalasokDiv = document.getElementById('sajat-foglalasok');
 
 let aktivTanarId = null;
 let tanarokCache = []; // Gyorsítótár a tanároknak
+let sajatFoglalasokCache = []; // Gyorsítótár a saját foglalásoknak
 let aktualisTanuloNeve = '';
 let aktualisOktatasiAzonosito = '';
 
@@ -95,26 +96,46 @@ async function loadFogadoora(tanarID) {
     valasztottTanarNevElem.textContent = data.nev;
     valasztottTanarTeremSpan.textContent = data.terem || 'Nincs megadva';
     valasztottTanarTargyakSpan.textContent = data.targyak || 'Nincs megadva';
+    idopontokListaDiv.innerHTML = ''; // Előző tartalom törlése
 
-    idopontokListaDiv.innerHTML = '';
-    if (data.idopontok && data.idopontok.length > 0) {
-      data.idopontok.forEach(idopont => {
-        const gomb = document.createElement('button');
-        gomb.type = 'button';
-        gomb.classList.add('btn');
-        gomb.textContent = idopont.idosav;
-        if (idopont.statusz === 'szabad') {
-          gomb.classList.add('btn-success');
-          gomb.addEventListener('click', () => kezdemenyezFoglalas(tanarID, data.nev, idopont.idosav));
-        } else {
-          gomb.classList.add('btn-danger');
-          gomb.disabled = true;
-          gomb.title = `Foglalt: ${idopont.foglaloAdatai.tanuloNeve}`;
-        }
-        idopontokListaDiv.appendChild(gomb);
-      });
+    // Távolítsuk el az előző tanárra vonatkozó figyelmeztetést, ha volt
+    const existingWarning = fogadooraSection.querySelector('.alert-warning.foglalas-figyelmeztetes-idopontok-helyett');
+    if(existingWarning) {
+        existingWarning.remove();
+    }
+
+    // Ellenőrizzük, hogy van-e már foglalás ehhez a tanárhoz
+    const vanMarFoglalasEhhezATanarhoz = sajatFoglalasokCache.some(
+      foglalas => String(foglalas.tanarID) === String(tanarID)
+    );
+
+    if (vanMarFoglalasEhhezATanarhoz) {
+      // Ha van foglalás, üzenetet jelenítünk meg a gombok helyett
+      const warningMessage = document.createElement('p');
+      warningMessage.classList.add('alert', 'alert-warning', 'mt-3', 'foglalas-figyelmeztetes-idopontok-helyett');
+      warningMessage.textContent = `Már van foglalása ehhez a tanárhoz (${data.nev}). Újabb foglalás nem lehetséges.`;
+      idopontokListaDiv.appendChild(warningMessage);
     } else {
-      idopontokListaDiv.innerHTML = '<p>Nincsenek elérhető időpontok.</p>';
+      // Ha nincs foglalás, megjelenítjük az időpontokat
+      if (data.idopontok && data.idopontok.length > 0) {
+        data.idopontok.forEach(idopont => {
+          const gomb = document.createElement('button');
+          gomb.type = 'button';
+          gomb.classList.add('btn');
+          gomb.textContent = idopont.idosav;
+          if (idopont.statusz === 'szabad') {
+            gomb.classList.add('btn-success');
+            gomb.addEventListener('click', () => kezdemenyezFoglalas(tanarID, data.nev, idopont.idosav));
+          } else {
+            gomb.classList.add('btn-danger');
+            gomb.disabled = true;
+            gomb.title = `Foglalt: ${idopont.foglaloAdatai.tanuloNeve}`;
+          }
+          idopontokListaDiv.appendChild(gomb);
+        });
+      } else {
+        idopontokListaDiv.innerHTML = '<p>Nincsenek elérhető időpontok.</p>';
+      }
     }
     fogadooraSection.style.display = 'block';
   } catch (error) {
@@ -124,9 +145,18 @@ async function loadFogadoora(tanarID) {
   }
 }
 
-// Foglalás kezdeményezése confirm ablakkal
+// Foglalás kezdeményezése
 async function kezdemenyezFoglalas(tanarID, tanarNev, idosav) {
-  if (!confirm(`Tanár: ${tanarNev}\nIdősáv: ${idosav}\nBiztosan szeretné lefoglalni ezt az idoőpontot?`))
+  // Ellenőrizzük a cache alapján, hogy az idősáv szerepel-e már a "Foglalásaim" között
+  const idosavMarFoglaltMasikTanarnal = sajatFoglalasokCache.some(
+    foglalas => foglalas.idosav === idosav
+  );
+  if (idosavMarFoglaltMasikTanarnal) {
+    alert(`Figyelem: Ebben az idősávban (${idosav}) már van egy másik foglalásod. Kérjük, válassz másik időpontot, vagy mondd le a másik foglalást.`);
+    return;
+  }
+
+  if (!confirm(`Tanár: ${tanarNev}\nIdősáv: ${idosav}\nBiztosan szeretné lefoglalni ezt az időpontot?`))
     return;
 
   try {
@@ -143,10 +173,11 @@ async function kezdemenyezFoglalas(tanarID, tanarNev, idosav) {
     if (!response.ok) {
       throw new Error(result.hiba || 'Foglalás sikertelen');
     }
+    // Először frissítjük a "Foglalásaim" listát, hogy a loadFogadoora már az új állapotot lássa
+    await loadSajatFoglalasok(aktualisOktatasiAzonosito); 
     if (aktivTanarId) {
       loadFogadoora(aktivTanarId); // Frissítjük az aktuális tanár nézetét
     }
-    await loadSajatFoglalasok(aktualisOktatasiAzonosito); // Foglalásaim frissítése
   } catch (error) {
     alert(`Hiba: ${error.message}`);
   }
@@ -163,8 +194,10 @@ async function loadSajatFoglalasok(oktatasiAzonosito) {
       throw new Error(errorData.hiba || `Saját foglalások lekérdezése sikertelen (státusz: ${response.status})`);
     }
     const talaltFoglalasok = await response.json();
+    sajatFoglalasokCache = talaltFoglalasok || []; // Gyorsítótár frissítése
 
     if (talaltFoglalasok && talaltFoglalasok.length > 0) {
+      // A DOM frissítése továbbra is szükséges a megjelenítéshez
       sajatFoglalasokDiv.innerHTML = ''; 
       const ul = document.createElement('ul');
       ul.classList.add('list-group');
@@ -191,6 +224,7 @@ async function loadSajatFoglalasok(oktatasiAzonosito) {
   } catch (error) {
     console.error('Hiba a saját foglalások keresésekor:', error);
     sajatFoglalasokDiv.innerHTML = '<p class="alert alert-danger">Hiba történt a foglalások keresése közben.</p>';
+    sajatFoglalasokCache = []; // Hiba esetén ürítjük a cache-t
   }
 }
 
