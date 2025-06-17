@@ -16,9 +16,9 @@ const foglalasaimSection = document.getElementById('foglalasaim-section');
 const foglalasaimTanuloInfoSpan = document.getElementById('foglalasaim-tanulo-info');
 const sajatFoglalasokDiv = document.getElementById('sajat-foglalasok');
 
-let aktivTanarId = null;
 let tanarokCache = []; // Gyorsítótár a tanároknak
 let sajatFoglalasokCache = []; // Gyorsítótár a saját foglalásoknak
+let aktivTanarId = null;
 let aktualisTanuloNeve = '';
 let aktualisOktatasiAzonosito = '';
 
@@ -68,7 +68,6 @@ async function loadTanarok() {
       tanarElem.href = '#';
       tanarElem.classList.add('list-group-item', 'list-group-item-action');
       tanarElem.textContent = `${tanar.nev} (${tanar.targyak || 'Nincs megadva'})`;
-      tanarElem.dataset.tanarId = tanar.tanarID;
 
       tanarElem.addEventListener('click', (e) => {
         e.preventDefault();
@@ -113,7 +112,7 @@ async function loadFogadoora(tanarID) {
       // Ha van foglalás, üzenetet jelenítünk meg a gombok helyett
       const warningMessage = document.createElement('p');
       warningMessage.classList.add('alert', 'alert-warning', 'mt-3', 'foglalas-figyelmeztetes-idopontok-helyett');
-      warningMessage.textContent = `Már van foglalása ehhez a tanárhoz (${data.nev}). Újabb foglalás nem lehetséges.`;
+      warningMessage.textContent = `Már van foglalása ehhez a tanárhoz. Újabb foglalás nem lehetséges.`;
       idopontokListaDiv.appendChild(warningMessage);
     } else {
       // Ha nincs foglalás, megjelenítjük az időpontokat
@@ -129,7 +128,6 @@ async function loadFogadoora(tanarID) {
           } else {
             gomb.classList.add('btn-danger');
             gomb.disabled = true;
-            gomb.title = `Foglalt: ${idopont.foglaloAdatai.tanuloNeve}`;
           }
           idopontokListaDiv.appendChild(gomb);
         });
@@ -155,7 +153,7 @@ async function kezdemenyezFoglalas(tanarID, tanarNev, idosav) {
     alert(`Figyelem: Ebben az idősávban (${idosav}) már van egy másik foglalásod. Kérjük, válassz másik időpontot, vagy mondd le a másik foglalást.`);
     return;
   }
-
+  // Megerősítés
   if (!confirm(`Tanár: ${tanarNev}\nIdősáv: ${idosav}\nBiztosan szeretné lefoglalni ezt az időpontot?`))
     return;
 
@@ -197,7 +195,7 @@ async function loadSajatFoglalasok(oktatasiAzonosito) {
     sajatFoglalasokCache = talaltFoglalasok || []; // Gyorsítótár frissítése
 
     if (talaltFoglalasok && talaltFoglalasok.length > 0) {
-      // A DOM frissítése továbbra is szükséges a megjelenítéshez
+      // A DOM frissítése
       sajatFoglalasokDiv.innerHTML = ''; 
       const ul = document.createElement('ul');
       ul.classList.add('list-group');
