@@ -91,6 +91,12 @@ function authenticateToken(req, res, next) {
 
 // --- Publikus végpontok ---
 
+// 0. Konfigurációs adatok (pl. dátum)
+app.get('/api/config', (req, res) => {
+  res.status(200).json({ date: process.env.DATE });
+});
+
+
 // 1. Összes tanár listázása
 app.get('/api/tanarok', (req, res) => {
   try {
@@ -192,9 +198,32 @@ app.delete('/api/foglalasok', (req, res) => {
   }
 });
 
+// 5. Egy adott tanuló összes foglalásának lekérdezése
+app.get('/api/tanulok/:oktatasiAzonosito/foglalasok', (req, res) => {
+  const { oktatasiAzonosito } = req.params;
+  if (!oktatasiAzonosito) {
+    return res.status(400).json({ hiba: 'Oktatási azonosító megadása kötelező.' });
+  }
+
+  try {
+    const stmt = db.prepare(`
+      SELECT f.foglalasID, f.tanarID, t.nev as tanarNev, f.idosav, f.tanuloNeve, f.oktatasiAzonosito
+      FROM foglalasok f
+      JOIN tanarok t ON f.tanarID = t.tanarID
+      WHERE f.oktatasiAzonosito = ?
+      ORDER BY f.idosav
+    `);
+    const foglalasok = stmt.all(oktatasiAzonosito);
+    res.status(200).json(foglalasok);
+  } catch (error) {
+    console.error(`Hiba a(z) ${oktatasiAzonosito} tanuló foglalásainak lekérdezésekor:`, error);
+    res.status(500).json({ hiba: 'Szerverhiba történt a foglalások lekérdezése során.' });
+  }
+});
+
 // --- Tanári (hitelesítést igénylő) végpontok ---
 
-// 5. Tanár bejelentkezése
+// 6. Tanár bejelentkezése
 app.post('/api/auth/login', (req, res) => {
   const { nev, jelszo } = req.body;
   if (!nev || !jelszo) {
@@ -222,7 +251,7 @@ app.post('/api/auth/login', (req, res) => {
   }
 });
 
-// 6. Bejelentkezett tanár foglalásainak listázása
+// 7. Bejelentkezett tanár foglalásainak listázása
 app.get('/api/auth/profil/foglalasok', authenticateToken, (req, res) => {
   const tanarID = req.user.tanarID; // a tokenből
   try {
@@ -235,6 +264,7 @@ app.get('/api/auth/profil/foglalasok', authenticateToken, (req, res) => {
   }
 });
 
+// szerver indítása
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Szerver fut a http://localhost:${PORT} porton`);

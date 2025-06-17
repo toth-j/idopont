@@ -20,7 +20,19 @@ let aktivTanarId = null;
 let tanarokCache = []; // Gyorsítótár a tanároknak
 let aktualisTanuloNeve = '';
 let aktualisOktatasiAzonosito = '';
-let foglaltTanarIdk = new Set(); // Azoknak a tanároknak az ID-jai, akikhez már van foglalás
+
+// Globális inicializálás: Dátum betöltése a navigációba
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const response = await fetch('/api/config');
+    if (response.ok) {
+      const config = await response.json();
+      if (config.date) {
+        document.getElementById('navbar-brand-title').textContent = `Fogadóóra (${config.date})`;
+      }
+    }
+  } catch (error) { console.error('Hiba a konfiguráció betöltésekor:', error); }
+});
 
 // Tanulói adatok kezelése
 tanuloAdatokForm.addEventListener('submit', async (e) => {
@@ -38,8 +50,8 @@ tanuloAdatokForm.addEventListener('submit', async (e) => {
   foglalasaimSection.style.display = 'block';
   foglalasaimTanuloInfoSpan.textContent = `${aktualisTanuloNeve} ${aktualisOktatasiAzonosito}`;
 
-  await loadSajatFoglalasok(aktualisOktatasiAzonosito); // Ezt előbb, hogy tudjuk, mely tanárok foglaltak
-  await loadTanarok();
+  await loadTanarok(); // Először a tanárokat töltjük be, hogy a cache rendelkezésre álljon
+  await loadSajatFoglalasok(aktualisOktatasiAzonosito); // Majd a saját foglalásokat, ami használja a tanarokCache-t
 });
 
 // Tanárok betöltése
@@ -57,19 +69,13 @@ async function loadTanarok() {
       tanarElem.textContent = `${tanar.nev} (${tanar.targyak || 'Nincs megadva'})`;
       tanarElem.dataset.tanarId = tanar.tanarID;
 
-      if (foglaltTanarIdk.has(tanar.tanarID)) {
-        tanarElem.classList.add('disabled', 'list-group-item-secondary');
-        tanarElem.title = 'Már van foglalásod ehhez a tanárhoz.';
-        tanarElem.style.pointerEvents = 'none'; // Kattintás letiltása CSS-sel is
-      } else {
-        tanarElem.addEventListener('click', (e) => {
-          e.preventDefault();
-          loadFogadoora(tanar.tanarID);
-          // Aktív elem jelölése (először eltávolítjuk az aktív osztályt az összes elemről, utána hozzáadjuk az aktuálishoz)
-          document.querySelectorAll('#tanarok-lista .list-group-item-action').forEach(item => item.classList.remove('active'));
-          tanarElem.classList.add('active');
-        });
-      }
+      tanarElem.addEventListener('click', (e) => {
+        e.preventDefault();
+        loadFogadoora(tanar.tanarID);
+        // Aktív elem jelölése (először eltávolítjuk az aktív osztályt az összes elemről, utána hozzáadjuk az aktuálishoz)
+        document.querySelectorAll('#tanarok-lista .list-group-item-action').forEach(item => item.classList.remove('active'));
+        tanarElem.classList.add('active');
+      });
       tanarokListaDiv.appendChild(tanarElem);
     });
   } catch (error) {
@@ -120,7 +126,7 @@ async function loadFogadoora(tanarID) {
 
 // Foglalás kezdeményezése confirm ablakkal
 async function kezdemenyezFoglalas(tanarID, tanarNev, idosav) {
-  if (!confirm(`Biztosan szeretne időpontot foglalni?\nTanár: ${tanarNev}\nIdősáv: ${idosav}`))
+  if (!confirm(`Tanár: ${tanarNev}\nIdősáv: ${idosav}\nBiztosan szeretné lefoglalni ezt az idoőpontot?`))
     return;
 
   try {
@@ -141,78 +147,59 @@ async function kezdemenyezFoglalas(tanarID, tanarNev, idosav) {
       loadFogadoora(aktivTanarId); // Frissítjük az aktuális tanár nézetét
     }
     await loadSajatFoglalasok(aktualisOktatasiAzonosito); // Foglalásaim frissítése
-    await loadTanarok(); // Tanárok listájának frissítése a foglalt státuszok miatt
   } catch (error) {
     alert(`Hiba: ${error.message}`);
   }
 }
 
+// Saját foglalások betöltése
 async function loadSajatFoglalasok(oktatasiAzonosito) {
   sajatFoglalasokDiv.innerHTML = '<p>Keresés...</p>';
-  let talaltFoglalasok = [];
-  foglaltTanarIdk.clear(); // Ürítjük az előző tanulóhoz tartozó foglalt tanárok halmazát
 
   try {
-    if (tanarokCache.length === 0) { // Ha még nem töltődtek be a tanárok
-      await loadTanarok(); // Ez akkor kellhet, ha valamiért nem töltődtek be korábban
+    const response = await fetch(`/api/tanulok/${oktatasiAzonosito}/foglalasok`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.hiba || `Saját foglalások lekérdezése sikertelen (státusz: ${response.status})`);
     }
+    const talaltFoglalasok = await response.json();
 
-    for (const tanar of tanarokCache) {
-      const response = await fetch(`/api/tanarok/${tanar.tanarID}/fogadoora`);
-      if (!response.ok) continue; // Hiba esetén kihagyjuk ezt a tanárt
-      const fogadooraData = await response.json();
-
-      if (fogadooraData.idopontok) {
-        fogadooraData.idopontok.forEach(idopont => {
-          if (idopont.statusz === 'foglalt' && idopont.foglaloAdatai && idopont.foglaloAdatai.oktatasiAzonosito === oktatasiAzonosito) {
-            talaltFoglalasok.push({
-              tanarNev: fogadooraData.nev,
-              tanarID: fogadooraData.tanarID,
-              idosav: idopont.idosav,
-              tanuloNeve: idopont.foglaloAdatai.tanuloNeve
-            });
-            foglaltTanarIdk.add(fogadooraData.tanarID); // Hozzáadjuk a tanár ID-t a foglaltakhoz
-          }
-        });
-      }
-    }
-
-    if (talaltFoglalasok.length > 0) {
-      sajatFoglalasokDiv.innerHTML = ''; // Clear previous content before adding new list
+    if (talaltFoglalasok && talaltFoglalasok.length > 0) {
+      sajatFoglalasokDiv.innerHTML = ''; 
       const ul = document.createElement('ul');
       ul.classList.add('list-group');
       talaltFoglalasok.forEach(foglalas => {
         const li = document.createElement('li');
         li.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-center');
         li.innerHTML = `
-                        <span><strong>${foglalas.tanarNev}</strong> - ${foglalas.idosav} (Tanuló: ${foglalas.tanuloNeve})</span>
+                        <span><strong>${foglalas.tanarNev}</strong> - ${foglalas.idosav}</span>
                         <button class="btn btn-sm btn-warning btn-lemond" data-tanar-id="${foglalas.tanarID}" data-oktatasi-azonosito="${oktatasiAzonosito}">Lemondás</button>
                     `;
+        const lemondButton = li.querySelector('.btn-lemond');
+        if (lemondButton) {
+          lemondButton.addEventListener('click', async () => {
+            // Az e.target helyett közvetlenül a dataset-ből olvassuk ki, mivel a gomb maga az esemény célpontja
+            await cancelFoglalas(lemondButton.dataset.tanarId, lemondButton.dataset.oktatasiAzonosito);
+          });
+        }
         ul.appendChild(li);
       });
       sajatFoglalasokDiv.appendChild(ul);
-
-      document.querySelectorAll('.btn-lemond').forEach(button => {
-        button.addEventListener('click', async (e) => {
-          const tanarIdToCancel = e.target.dataset.tanarId;
-          const oaToCancel = e.target.dataset.oktatasiAzonosito;
-          if (confirm('Biztosan le szeretné mondani ezt a foglalást?')) {
-            await cancelFoglalas(tanarIdToCancel, oaToCancel);
-          }
-        });
-      });
-
     } else {
       sajatFoglalasokDiv.innerHTML = '<p class="alert alert-info">Nincsenek foglalásaid ezzel az oktatási azonosítóval.</p>';
     }
-
   } catch (error) {
     console.error('Hiba a saját foglalások keresésekor:', error);
     sajatFoglalasokDiv.innerHTML = '<p class="alert alert-danger">Hiba történt a foglalások keresése közben.</p>';
   }
 }
 
+// Foglalás lemondása
 async function cancelFoglalas(tanarID, oktatasiAzonosito) {
+  if (!confirm('Biztosan le szeretné mondani ezt a foglalást?')) {
+    return; // A felhasználó megszakította a műveletet
+  }
+
   try {
     const response = await fetch(`/api/foglalasok?tanarID=${tanarID}&oktatasiAzonosito=${oktatasiAzonosito}`, {
       method: 'DELETE'
@@ -221,8 +208,7 @@ async function cancelFoglalas(tanarID, oktatasiAzonosito) {
       const errorData = await response.json().catch(() => ({ hiba: 'Ismeretlen hiba' }));
       throw new Error(errorData.hiba || `Lemondás sikertelen (státusz: ${response.status})`);
     }
-    await loadSajatFoglalasok(oktatasiAzonosito); // Frissítjük a "Foglalásaim" listát és a foglaltTanarIdk halmazt
-    await loadTanarok(); // Frissítjük a tanárok listáját, hogy a lemondott tanár újra elérhető legyen
+    await loadSajatFoglalasok(oktatasiAzonosito); // Frissítjük a "Foglalásaim" listát
     if (aktivTanarId && String(aktivTanarId) === String(tanarID)) {
       loadFogadoora(aktivTanarId); // Frissítjük az aktuális tanár idősávjait is, ha az volt nyitva
     }
