@@ -14,7 +14,7 @@
 [7. Szerver indítása és leállítása](#7-szerver-indítása-és-leállítása)  
 [8. Statikus fájlok kiszolgálása](#8-statikus-fájlok-kiszolgálása)  
 [9. Middleware-ek](#9-middleware-ek)  
-[10. API Tesztelés](#10-api-tesztelés)
+[10. API tesztelés](#10-api-tesztelés)
 
 Ez a dokumentáció a fogadóóra alkalmazás backendjének működését, végpontjait és belső logikáját ismerteti.
 
@@ -195,7 +195,7 @@ Authentikációt igényelnek - `authenticateToken` middleware.
 * `cors()`: Engedélyezi a Cross-Origin Resource Sharing-et, ami szükséges lehet, ha a frontend és a backend különböző domaineken/portokon fut.
 * `express.json()`: Feldolgozza a bejövő JSON request body-kat.
 
-## 10. API Tesztelés
+## 10. API tesztelés
 
 A backend API végpontjainak helyes működését a `tests/api_test.http` fájlban definiált tesztesetek segítségével lehet ellenőrizni. Ez a fájl a REST Client Visual Studio Code kiterjesztés által használt `.http` formátumot követi, amely lehetővé teszi HTTP kérések közvetlen küldését és a válaszok vizsgálatát a szerkesztőn belül.
 

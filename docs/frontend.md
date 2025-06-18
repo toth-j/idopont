@@ -187,7 +187,7 @@ Mindkét JavaScript fájl `fetch` API-t használ a backenddel való kommunikáci
 
 ## 8. Felhasználói (E2E) tesztelés
 
-A felhasználói tesztek a `tests/e2e_test.md` fájlban találhatók. A tesztesetek futtatása előtt a `tesztadatok.sql` fájl futtatásával új adatbázist kell létrehozni:
+A felhasználói tesztek a `tests/e2e_test.md` fájlban találhatók. A tesztesetek futtatása előtt be kell állítani a fogadóóra adatait a `.env` fájlban, és a `tesztadatok.sql` fájl futtatásával új adatbázist kell létrehozni:
 
 ```bash
 sqlite3 idopontok.db < tests/tesztadatok.sql
