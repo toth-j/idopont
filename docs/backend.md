@@ -13,7 +13,8 @@
     - [6.2. Tanári végpontok](#62-tanári-végpontok)  
 [7. Szerver indítása és leállítása](#7-szerver-indítása-és-leállítása)  
 [8. Statikus fájlok kiszolgálása](#8-statikus-fájlok-kiszolgálása)  
-[9. Middleware-ek](#9-middleware-ek)
+[9. Middleware-ek](#9-middleware-ek)  
+[10. API Tesztelés](#10-api-tesztelés)
 
 Ez a dokumentáció a fogadóóra alkalmazás backendjének működését, végpontjait és belső logikáját ismerteti.
 
@@ -193,3 +194,20 @@ Authentikációt igényelnek - `authenticateToken` middleware.
 
 * `cors()`: Engedélyezi a Cross-Origin Resource Sharing-et, ami szükséges lehet, ha a frontend és a backend különböző domaineken/portokon fut.
 * `express.json()`: Feldolgozza a bejövő JSON request body-kat.
+
+## 10. API Tesztelés
+
+A backend API végpontjainak helyes működését a `tests/api_test.http` fájlban definiált tesztesetek segítségével lehet ellenőrizni. Ez a fájl a REST Client Visual Studio Code kiterjesztés által használt `.http` formátumot követi, amely lehetővé teszi HTTP kérések közvetlen küldését és a válaszok vizsgálatát a szerkesztőn belül.
+
+* **Cél**:
+  * Az összes API végpont funkcionalitásának ellenőrzése (sikeres esetek, hibakezelés, peremfeltételek).
+  * Az adatbázis-műveletek helyességének validálása a végpontokon keresztül.
+  * Az authentikációs mechanizmus (JWT) megfelelő működésének tesztelése.
+  * A konfigurációs beállítások (pl. fogadóóra ideje) API-n keresztüli hatásának ellenőrzése.
+* **Használat**:
+  * A `tests/api_test.http` fájl tartalmazza a különböző végpontokhoz tartozó GET, POST, DELETE kéréseket.
+  * Minden kérés előtt és után kommentekben szerepel a teszt célja és az elvárt eredmény (státuszkód, válasz body).
+  * A tesztek futtatásához a REST Client kiterjesztés telepítése szükséges a VS Code-ban. Ezt követően a `.http` fájlban a "Send Request" linkre kattintva lehet egyesével végrehajtani a kéréseket.
+  * A tesztek feltételezik, hogy az adatbázis a `tesztadatok.sql` szkript alapján lett inicializálva, és a `.env` fájlban a megfelelő konfigurációs értékek (pl. `DATE`, `START`, `END`) be vannak állítva a tesztesetek elvárásainak megfelelően.
+  * Néhány teszt (pl. foglalás törlése) módosítja az adatbázis állapotát. Ezek újrafuttatása előtt szükség lehet az adatbázis visszaállítására a `tesztadatok.sql` segítségével.
+  * Az authentikációt igénylő végpontok teszteléséhez a bejelentkezési (`/api/auth/login`) végpont válaszából származó JWT token `@változó`-ban kerül elmentésre, amit a későbbi kérések `Authorization: Bearer {{@valtozoNeve}}` fejlécben használnak fel.

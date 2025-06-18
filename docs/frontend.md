@@ -17,6 +17,7 @@ Ez a dokumentum a Fogadóóra alkalmazás frontend részének fejlesztői dokume
 7. [Fontosabb funkciók](#7-fontosabb-funkciók)
     * [7.1. Szülői felület](#71-szülői-felület-indexhtml-szulojs)
     * [7.2. Tanári felület](#72-tanári-felület-tanarhtml-tanarjs)
+8. [Felhasználói (E2E) manuális tesztelés](#8-felhasználói-e2e-tesztelés)
 
 ---
 
@@ -124,7 +125,7 @@ Ez a fájl tartalmazza a `tanar.html`-hez kapcsolódó összes kliensoldali logi
 
 ---
 
-## 5. CSS Stílusok
+## 5. CSS stílusok
 
 * **Bootstrap 5.3.2**: Az alapvető UI komponensek és a reszponzív dizájn Bootstrap segítségével valósul meg, amelyet a CDN-ről tölt le.
 * `css/style.css`: Ez a fájl egyedi stílusokat tartalmaz, amelyek felülírják vagy kiegészítik a Bootstrap stílusait.
@@ -181,3 +182,13 @@ Mindkét JavaScript fájl `fetch` API-t használ a backenddel való kommunikáci
     * API hívások során (pl. foglalások lekérése) lejárt vagy érvénytelen token esetén a felhasználót visszairányítja a login oldalra.
 5. **Navigációs sáv**:
     * Mindkét oldalon (szülői, tanári) a navigációs sávban megjelenik a fogadóóra beállított dátuma, amit az `/api/config` végpontról kér le.
+
+---
+
+## 8. Felhasználói (E2E) tesztelés
+
+A felhasználói tesztek a `tests/e2e_test.md` fájlban találhatók. A tesztesetek futtatása előtt a `tesztadatok.sql` fájl futtatásával új adatbázist kell létrehozni:
+
+```bash
+sqlite3 idopontok.db < tests/tesztadatok.sql
+```
