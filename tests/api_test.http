@@ -5,7 +5,7 @@
 
 ###
 # 0. végpont: GET /api/config
-# Leírás: Ellenőrzi, hogy a konfigurációs végpont visszaadja-e a helyes fogadóóra dátumot.
+# 0. teszt: Fogadóóra dátumának ellenőrzése.
 GET {{baseUrl}}/api/config
 
 # Elvárt eredmény:
@@ -14,7 +14,7 @@ GET {{baseUrl}}/api/config
 
 ###
 # 1. végpont: GET /api/tanarok
-# Leírás: Ellenőrzi, hogy a végpont sikeresen listázza-e az összes tanárt.
+# 1. teszt: Összes tanár listázása.
 GET {{baseUrl}}/api/tanarok
 
 # Elvárt eredmény:
@@ -32,7 +32,7 @@ GET {{baseUrl}}/api/tanarok
 # 2. végpont: GET /api/tanarok/:tanarID/fogadoora
 
 ###
-# 2.1 Teszt: Létező tanár, vannak foglalásai a konfigurált időintervallumban
+# 2.1 teszt: Létező tanár, vannak foglalásai a konfigurált időintervallumban
 # Leírás: Kiss Mária (ID: 2) fogadóórája. A .env START=18:00, így a 18:00-s foglalása látszik.
 GET {{baseUrl}}/api/tanarok/2/fogadoora
 
@@ -55,7 +55,7 @@ GET {{baseUrl}}/api/tanarok/2/fogadoora
 # }
 
 ###
-# 2.2 Teszt: Létező tanár, nincsenek foglalásai a konfigurált időintervallumban
+# 2.2 teszt: Létező tanár, nincsenek foglalásai a konfigurált időintervallumban
 # Leírás: Horváth Éva (ID: 4) fogadóórája, akinek nincsenek foglalásai.
 GET {{baseUrl}}/api/tanarok/4/fogadoora
 
@@ -78,7 +78,7 @@ GET {{baseUrl}}/api/tanarok/4/fogadoora
 # }
 
 ###
-# 2.3 Teszt: Nem létező tanár
+# 2.3 teszt: Nem létező tanár
 # Leírás: Nem létező tanár ID (99) lekérdezése.
 GET {{baseUrl}}/api/tanarok/99/fogadoora
 
@@ -90,7 +90,7 @@ GET {{baseUrl}}/api/tanarok/99/fogadoora
 # 3. végpont: POST /api/tanarok/:tanarID/foglalasok
 
 ###
-# 3.1 Teszt: Sikeres foglalás új időpontra
+# 3.1 teszt: Sikeres foglalás új időpontra
 # Leírás: Új időpont foglalása Horváth Évához (ID: 4) egy szabad idősávra (18:30).
 POST {{baseUrl}}/api/tanarok/4/foglalasok
 Content-Type: application/json
@@ -113,7 +113,7 @@ Content-Type: application/json
 # }
 
 ###
-# 3.2 Teszt: Foglalás már foglalt idősávra ugyanannál a tanárnál
+# 3.2 teszt: Foglalás már foglalt idősávra ugyanannál a tanárnál
 # Leírás: Kísérlet foglalásra Kiss Máriához (ID: 2) a már foglalt 18:00-s idősávra.
 POST {{baseUrl}}/api/tanarok/2/foglalasok
 Content-Type: application/json
@@ -129,7 +129,7 @@ Content-Type: application/json
 # Válasz body (JSON): {"hiba": "Ez az idősáv ennél a tanárnál már foglalt."}
 
 ###
-# 3.3 Teszt: Tanuló már foglalt ehhez a tanárhoz
+# 3.3 teszt: Tanuló már foglalt ehhez a tanárhoz
 # Leírás: Gyakorló Gréta (70000000004) újabb időpontot próbál foglalni Kiss Máriához (ID: 2).
 POST {{baseUrl}}/api/tanarok/2/foglalasok
 Content-Type: application/json
@@ -145,7 +145,7 @@ Content-Type: application/json
 # Válasz body (JSON): {"hiba": "Ennél a tanárnál már van foglalásod."}
 
 ###
-# 3.4 Teszt: Tanuló már foglalt ebben az idősávban másik tanárnál
+# 3.4 teszt: Tanuló már foglalt ebben az idősávban másik tanárnál
 # Leírás: Gyakorló Gréta (70000000004) 18:00-ra próbál foglalni Horváth Évához (ID: 4), 
 # miközben már van foglalása Kiss Máriánál.
 POST {{baseUrl}}/api/tanarok/4/foglalasok
@@ -162,7 +162,7 @@ Content-Type: application/json
 # Válasz body (JSON): {"hiba": "Ebben az időpontban már van egy másik foglalásod."}
 
 ###
-# 3.5 Teszt: Hiányos adatokkal történő foglalás
+# 3.5 teszt: Hiányos adatokkal történő foglalás
 # Leírás: Foglalási kísérlet hiányos adatokkal (oktatasiAzonosito hiányzik).
 POST {{baseUrl}}/api/tanarok/4/foglalasok
 Content-Type: application/json
@@ -177,7 +177,7 @@ Content-Type: application/json
 # Válasz body (JSON): {"hiba": "Minden mező kitöltése kötelező (idosav, tanuloNeve, oktatasiAzonosito)."}
 
 ###
-# 3.6 Teszt: Foglalás a fogadóóra dátuma után
+# 3.6 teszt: Foglalás a fogadóóra dátuma után
 # Leírás: Foglalási kísérlet a fogadóóra dátuma (.env DATE=2025-09-02) után.
 # Ezt a tesztet úgy lehet érdemben futtatni, ha a szerver aktuális dátuma 2025-09-02 utáni.
 # Vagy ideiglenesen átállítod a .env DATE értékét egy múltbeli dátumra a teszt idejére.
@@ -198,7 +198,7 @@ Content-Type: application/json
 # 4. végpont: DELETE /api/foglalasok
 
 ###
-# 4.1 Teszt: Sikeres foglalás törlése
+# 4.1 teszt: Sikeres foglalás törlése
 # Leírás: Gyakorló Gréta (70000000004) foglalásának törlése Kiss Máriánál (ID: 2).
 # FIGYELEM: Ez a teszt módosítja az adatbázist. Ha újra akarod tesztelni a foglalásait,
 # vagy a tesztadatok.sql-t kell újra futtatni, vagy manuálisan újra létrehozni a foglalást.
@@ -208,7 +208,7 @@ DELETE {{baseUrl}}/api/foglalasok?tanarID=2&oktatasiAzonosito=70000000004
 # Státuszkód: 204 No Content
 
 ###
-# 4.2 Teszt: Nem létező foglalás törlése
+# 4.2 teszt: Nem létező foglalás törlése
 # Leírás: Nem létező foglalás törlésének kísérlete.
 DELETE {{baseUrl}}/api/foglalasok?tanarID=99&oktatasiAzonosito=70000000000
 
@@ -217,7 +217,7 @@ DELETE {{baseUrl}}/api/foglalasok?tanarID=99&oktatasiAzonosito=70000000000
 # Válasz body (JSON): {"hiba": "Nincs ilyen foglalás a megadott tanárnál ezzel az oktatási azonosítóval."}
 
 ###
-# 4.3 Teszt: Hiányzó query paraméterekkel történő törlés
+# 4.3 teszt: Hiányzó query paraméterekkel történő törlés
 # Leírás: Törlési kísérlet hiányzó tanarID paraméterrel.
 DELETE {{baseUrl}}/api/foglalasok?oktatasiAzonosito=70000000004
 
@@ -229,7 +229,7 @@ DELETE {{baseUrl}}/api/foglalasok?oktatasiAzonosito=70000000004
 # 5. végpont: GET /api/tanulok/:oktatasiAzonosito/foglalasok
 
 ###
-# 5.1 Teszt: Létező tanuló foglalásainak lekérdezése
+# 5.1 teszt: Létező tanuló foglalásainak lekérdezése
 # Leírás: Próba Péter (70000000003) foglalásainak lekérdezése.
 # (A tesztadatok.sql alapján van egy foglalása Kiss Máriához 17:10-re)
 GET {{baseUrl}}/api/tanulok/70000000003/foglalasok
@@ -249,7 +249,7 @@ GET {{baseUrl}}/api/tanulok/70000000003/foglalasok
 # ]
 
 ###
-# 5.2 Teszt: Olyan tanuló foglalásainak lekérdezése, akinek nincs foglalása
+# 5.2 teszt: Olyan tanuló foglalásainak lekérdezése, akinek nincs foglalása
 # Leírás: Olyan tanuló (79999999999) foglalásainak lekérdezése, akinek nincs foglalása.
 GET {{baseUrl}}/api/tanulok/79999999999/foglalasok
 
@@ -261,7 +261,7 @@ GET {{baseUrl}}/api/tanulok/79999999999/foglalasok
 # 6. végpont: POST /api/auth/login
 
 ###
-# 6.1 Teszt: Sikeres tanári bejelentkezés (Nagy Béla)
+# 6.1 teszt: Sikeres tanári bejelentkezés (Nagy Béla)
 # Leírás: Nagy Béla bejelentkezése helyes adatokkal. A tokent elmentjük.
 # @name loginNagyBela
 POST {{baseUrl}}/api/auth/login
@@ -283,7 +283,7 @@ Content-Type: application/json
 @tanarTokenNagyBela = {{loginNagyBela.response.body.token}}
 
 ###
-# 6.1.1 Teszt: Sikeres tanári bejelentkezés (Kiss Mária)
+# 6.1.1 teszt: Sikeres tanári bejelentkezés (Kiss Mária)
 # Leírás: Kiss Mária bejelentkezése helyes adatokkal. A tokent elmentjük.
 # @name loginKissMaria
 POST {{baseUrl}}/api/auth/login
@@ -305,7 +305,7 @@ Content-Type: application/json
 @tanarTokenKissMaria = {{loginKissMaria.response.body.token}}
 
 ###
-# 6.2 Teszt: Sikertelen bejelentkezés rossz jelszóval
+# 6.2 teszt: Sikertelen bejelentkezés rossz jelszóval
 # Leírás: Nagy Béla bejelentkezési kísérlete rossz jelszóval.
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
@@ -320,7 +320,7 @@ Content-Type: application/json
 # Válasz body (JSON): {"hiba": "Hibás felhasználónév vagy jelszó."}
 
 ###
-# 6.3 Teszt: Sikertelen bejelentkezés nem létező felhasználónévvel
+# 6.3 teszt: Sikertelen bejelentkezés nem létező felhasználónévvel
 # Leírás: Bejelentkezési kísérlet nem létező tanárnévvel.
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
@@ -335,7 +335,7 @@ Content-Type: application/json
 # Válasz body (JSON): {"hiba": "Hibás felhasználónév vagy jelszó."}
 
 ###
-# 6.4 Teszt: Hiányos adatokkal történő bejelentkezés
+# 6.4 teszt: Hiányos adatokkal történő bejelentkezés
 # Leírás: Bejelentkezési kísérlet hiányzó jelszóval.
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
@@ -352,9 +352,9 @@ Content-Type: application/json
 # 7. végpont: GET /api/auth/profil/foglalasok (Authentikációt igényel)
 
 ###
-# 7.1 Teszt: Bejelentkezett tanár (Kiss Mária) foglalásainak sikeres lekérdezése
+# 7.1 teszt: Bejelentkezett tanár (Kiss Mária) foglalásainak sikeres lekérdezése
 # Leírás: Kiss Mária (ID: 2) foglalásainak lekérdezése érvényes token-nel.
-# Először futtasd a "6.1.1 Teszt: Sikeres tanári bejelentkezés (Kiss Mária)" részt a token megszerzéséhez!
+# Először futtasd a "6.1.1 teszt: Sikeres tanári bejelentkezés (Kiss Mária)" részt a token megszerzéséhez!
 GET {{baseUrl}}/api/auth/profil/foglalasok
 Authorization: Bearer {{tanarTokenKissMaria}}
 
@@ -371,7 +371,7 @@ Authorization: Bearer {{tanarTokenKissMaria}}
 # ]
 
 ###
-# 7.2 Teszt: Lekérdezés érvénytelen/lejárt token-nel
+# 7.2 teszt: Lekérdezés érvénytelen/lejárt token-nel
 # Leírás: Foglalások lekérdezésének kísérlete érvénytelen token-nel.
 GET {{baseUrl}}/api/auth/profil/foglalasok
 Authorization: Bearer ERVENYTELEN_TOKEN_VAGY_LEJART
@@ -381,7 +381,7 @@ Authorization: Bearer ERVENYTELEN_TOKEN_VAGY_LEJART
 # Válasz body (JSON): {"hiba": "Hibás token."}
 
 ###
-# 7.3 Teszt: Lekérdezés token nélkül
+# 7.3 teszt: Lekérdezés token nélkül
 # Leírás: Foglalások lekérdezésének kísérlete token nélkül.
 GET {{baseUrl}}/api/auth/profil/foglalasok
 
