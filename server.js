@@ -17,11 +17,20 @@ db.pragma('foreign_keys = ON');
 db.pragma('journal_mode = WAL');
 
 const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error("KRITIKUS HIBA: A JWT_SECRET nincs definiálva a .env fájlban!");
+  process.exit(1); // Kilépés, ha a kritikus változó hiányzik
+}
+
 // Fogadóóra konfiguráció
+const FOGADOORA_DATUM = process.env.DATE;
+if (!FOGADOORA_DATUM) {
+  console.error("KRITIKUS HIBA: A DATE (fogadóóra dátuma) nincs definiálva a .env fájlban!");
+  process.exit(1);
+}
 const FOGADOORA_START_IDO = process.env.START || "17:00";
 const FOGADOORA_END_IDO = process.env.END || "18:00";
 const FOGADOORA_HOSSZ_PERC = parseInt(process.env.HOSSZ) || 10;
-const FOGADOORA_DATUM = process.env.DATE;
 
 // Idősávok generálása
 function generateTimeSlots(startTimeStr, endTimeStr, intervalMinutes, existingBookings) {
@@ -72,7 +81,7 @@ function authenticateToken(req, res, next) {
 
 // 0. Konfigurációs adatok (dátum)
 app.get('/api/config', (req, res) => {
-  res.status(200).json({ date: process.env.DATE });
+  res.status(200).json({ date: FOGADOORA_DATUM }); // Konzisztens használat
 });
 
 
@@ -123,10 +132,6 @@ app.post('/api/tanarok/:tanarID/foglalasok', (req, res) => {
 
   // Ellenőrizzük, hogy a foglalás a fogadóóra napján vagy előtte történik-e
   const maiDatum = new Date().toISOString().split('T')[0]; // YYYY-MM-DD formátum
-  if (!FOGADOORA_DATUM) {
-    console.error("Hiba: A FOGADOORA_DATUM nincs beállítva a .env fájlban.");
-    return res.status(500).json({ hiba: 'Szerver konfigurációs hiba: a fogadóóra dátuma nincs megadva.' });
-  }
   if (maiDatum > FOGADOORA_DATUM) {
     return res.status(403).json({ hiba: `Foglalás csak a fogadóóra napjáig lehetséges.` });
   }
@@ -177,7 +182,7 @@ app.delete('/api/foglalasok', (req, res) => {
     const info = stmt.run(tanarID, oktatasiAzonosito);
 
     if (info.changes > 0) {
-      res.status(204).json({ uzenet: 'A foglalás sikeresen törölve lett' });
+      res.status(204).send(); // A 204 No Content válasz nem tartalmazhat body-t
     } else {
       res.status(404).json({ hiba: 'Nincs ilyen foglalás a megadott tanárnál ezzel az oktatási azonosítóval.' });
     }
@@ -226,10 +231,15 @@ app.post('/api/auth/login', (req, res) => {
       return res.status(401).json({ hiba: 'Hibás felhasználónév vagy jelszó.' });
     }
     bcrypt.compare(jelszo, tanar.jelszoHash, (err, result) => {
-      if (err || !result) {
+      if (err) { // Hiba történt a bcrypt.compare futása közben
+        console.error("Hiba a jelszó ellenőrzésekor (bcrypt.compare):", err);
+        return res.status(500).json({ hiba: 'Szerverhiba történt a bejelentkezés feldolgozása közben.' });
+      }
+      if (!result) { // Sikeres összehasonlítás, de a jelszó nem egyezik
         return res.status(401).json({ hiba: 'Hibás felhasználónév vagy jelszó.' });
       }
 
+      // Sikeres bejelentkezés
       const { jelszoHash, ...tanarAdatai } = tanar; // Jelszóhash nélkül küldjük vissza
       const token = jwt.sign({ tanarID: tanar.tanarID, nev: tanar.nev }, JWT_SECRET, { expiresIn: '2h' });
       res.status(200).json({ token, tanar: tanarAdatai });
@@ -258,7 +268,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Szerver fut a http://localhost:${PORT} porton`);
   console.log(`Adatbázis: ${dbPath}`);
-  console.log(`Fogadóóra: ${FOGADOORA_START_IDO} - ${FOGADOORA_END_IDO}, ${FOGADOORA_HOSSZ_PERC} perces idősávok`);
+  console.log(`Fogadóóra: ${FOGADOORA_DATUM}-én ${FOGADOORA_START_IDO} - ${FOGADOORA_END_IDO}, ${FOGADOORA_HOSSZ_PERC} perces idősávok`);
 });
 
 // Graceful shutdown
