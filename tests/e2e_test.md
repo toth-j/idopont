@@ -14,11 +14,12 @@ Ez a dokumentum a Fogadóóra alkalmazás végponttól végpontig (E2E) tartó t
     3. Az "Oktatási azonosító" mezőbe írjon be egy érvényes, 11 jegyű számot, amely még nem szerepel a `tesztadatok.sql`-ben ("70000000006").
     4. Kattintson a "Tovább az időpontfoglaláshoz" gombra.
 * **Elvárt eredmény**:
-  * A "Tanuló adatai" (`tanulo-adatok-section`) szekció eltűnik.
-  * A "Válasszon tanárt" (`tanarok-lista-section`) szekció megjelenik.
-  * A "Foglalásaim" (`foglalasaim-section`) szekció megjelenik.
-  * A "Foglalásaim" szekció fejlécében (`foglalasaim-tanulo-info`) megjelenik a megadott tanuló neve és oktatási azonosítója ("Új Diák Géza 70000000006").
-  * A tanárok listája betöltődik a "Válasszon tanárt" szekcióban ("Nagy Béla", "Kiss Mária", "Szabó István", "Horváth Éva").
+  * A "Tanuló adatai" szakasz eltűnik.
+  * A "Válasszon tanárt" szakasz megjelenik.
+  * A tanárok listája betöltődik a "Válasszon tanárt" szakaszban ("Nagy Béla", "Kiss Mária", "Szabó István", "Horváth Éva").
+  * A "Foglalásaim" szakasz megjelenik.
+  * A "Foglalásaim" szakasz fejlécében megjelenik a megadott tanuló neve és oktatási azonosítója ("Új Diák Géza 70000000006").
+  * Még nincs foglalásom, ezért megjelenik a "Nincsenek foglalásaid ezzel az oktatási azonosítóval." üzenet.
 
 ### 1.2. Tanulói adatok érvénytelen megadása
 
@@ -30,17 +31,17 @@ Ez a dokumentum a Fogadóóra alkalmazás végponttól végpontig (E2E) tartó t
     3. Az "Oktatási azonosító" mezőbe írjon be egy érvénytelen azonosítót ("123" vagy "abc").
     4. Kattintson a "Tovább az időpontfoglaláshoz" gombra.
 * **Elvárt eredmény**:
-  * Egy figyelmeztető üzenet (alert) jelenik meg, amely tájékoztat a hibás adatokról ("Kérjük, adja meg helyesen a tanuló nevét és a 11 jegyű oktatási azonosítóját!").
-  * A "Tanuló adatai" (`tanulo-adatok-section`) szekció továbbra is látható marad.
+  * Egy figyelmeztető üzenet jelenik meg, amely tájékoztat, hogy "Töltse ki ezt a mezőt".
+  * A "Tanuló adatai" szakasz továbbra is látható marad.
 
 ### 1.3. Tanár kiválasztása és fogadóóra időpontok megjelenítése
 
 * **Cél**: Ellenőrizni, hogy a felhasználó ki tud választani egy tanárt, és megjelennek a tanár adatai, valamint a szabad/foglalt időpontjai.
 * **Előfeltételek**: Sikeresen megadta a tanulói adatokat (lásd 1.1. teszteset, "Új Diák Géza", "70000000006"). Az API szolgáltat tanárokat és időpontokat a `tesztadatok.sql` alapján.
 * **Lépések**:
-    1. A "Válasszon tanárt" (`tanarok-lista`) listából kattintson "Nagy Béla" nevére.
+    1. A "Válasszon tanárt" listából kattintson "Nagy Béla" nevére.
 * **Elvárt eredmény**:
-  * A kiválasztott tanár neve (`valasztott-tanar-nev`) "Nagy Béla", terme (`valasztott-tanar-terem`) "101-es terem" és tárgyai (`valasztott-tanar-targyak`) "Matematika, Fizika" megjelennek.
+  * A kiválasztott tanár neve "Nagy Béla", terme "101-es terem" és tárgyai "Matematika, Fizika" megjelennek.
   * A "Szabad időpontok" (`idopontok-lista`) alatt megjelennek az időpontok. A `tesztadatok.sql` alapján "Nagy Béla" 17:00 és 17:20 időpontjai piros (foglalt) gombként, a többi lehetséges időpont (a backend logikája szerint) zöld (szabad) gombként jelenik meg.
   * "Nagy Béla" aktívként jelenik meg a tanárlistában.
 
@@ -49,11 +50,11 @@ Ez a dokumentum a Fogadóóra alkalmazás végponttól végpontig (E2E) tartó t
 * **Cél**: Ellenőrizni, hogy a felhasználó sikeresen tud időpontot foglalni egy tanárhoz.
 * **Előfeltételek**: A tanulói adatok megadva ("Új Foglaló Károly", "70000000007" - egy új, még nem használt azonosító). A felhasználó kiválasztotta "Horváth Éva" tanárt (akinek a `tesztadatok.sql` szerint nincsenek foglalásai, így minden időpontja szabad).
 * **Lépések**:
-    1. A "Szabad időpontok" (`idopontok-lista`) listából kattintson egy zöld, szabad időpontot jelző gombra "Horváth Éva"-nál (a "17:00" gombra, feltételezve, hogy ez egy generált szabad idősáv).
+    1. A "Szabad időpontok" listából kattintson egy zöld, szabad időpontot jelző gombra, "Horváth Éva"-nál a "17:00" gombra.
     2. A megjelenő megerősítő párbeszédablakban ("Biztosan szeretné lefoglalni ezt az időpontot?") kattintson az "OK" gombra.
 * **Elvárt eredmény**:
-  * A "Foglalásaim" (`sajat-foglalasok`) szekcióban megjelenik az újonnan foglalt időpont: "Horváth Éva - 17:00".
-  * "Horváth Éva" "Szabad időpontok" (`idopontok-lista`) nézete frissül: a "17:00" időpont már nem szabadként jelenik meg (piros és inaktív lesz, vagy megjelenik a "Már van foglalása ehhez a tanárhoz" üzenet).
+  * A "Foglalásaim" szakaszban megjelenik az újonnan foglalt időpont: "Horváth Éva - 17:00" és mellette a "Lemondás" gomb
+  * "Horváth Éva" "Szabad időpontok" nézete frissül: megjelenik a "Már van foglalása ehhez a tanárhoz" üzenet.
 
 ### 1.5. Időpontfoglalási kísérlet már foglalt idősávra (másik tanárnál)
 
@@ -73,19 +74,19 @@ Ez a dokumentum a Fogadóóra alkalmazás végponttól végpontig (E2E) tartó t
 * **Lépések**:
     1. Válassza ki újra "Nagy Béla" tanárt a listából.
 * **Elvárt eredmény**:
-  * A "Szabad időpontok" (`idopontok-lista`) helyett egy figyelmeztető üzenet jelenik meg ("Már van foglalása ehhez a tanárhoz. Újabb foglalás nem lehetséges.").
+  * A "Szabad időpontok" helyett egy figyelmeztető üzenet jelenik meg ("Már van foglalása ehhez a tanárhoz. Újabb foglalás nem lehetséges.").
   * Nem jelennek meg foglalható időpont gombok.
 
 ### 1.7. Foglalás lemondása
 
 * **Cél**: Ellenőrizni, hogy a felhasználó sikeresen le tudja mondani egy meglévő foglalását.
-* **Előfeltételek**: A tanuló "Minta Anna" (oktatási azonosító: "70000000002") be van jelentkezve. A `tesztadatok.sql` szerint "Minta Anná"-nak 17:20-kor van foglalása "Nagy Béla"-nál (TanarID=1). Ez a foglalás megjelenik a "Foglalásaim" szekcióban.
+* **Előfeltételek**: A tanuló "Új Foglaló Károly" (oktatási azonosító: "70000000007") be van jelentkezve. Az 1.4-es tesztben foglalt egy idpontot Horváth Évához ("17:00"). Ez a foglalás megjelenik a "Foglalásaim" szakaszban.
 * **Lépések**:
-    1. A "Foglalásaim" (`sajat-foglalasok`) listában a "Nagy Béla - 17:20" foglalás melletti "Lemondás" gombra kattint.
+    1. A "Foglalásaim" listában a "Új Foglaló Károly - 17:00" foglalás melletti "Lemondás" gombra kattint.
     2. A megjelenő megerősítő párbeszédablakban ("Biztosan le szeretné mondani ezt a foglalást?") kattintson az "OK" gombra.
 * **Elvárt eredmény**:
-  * A "Nagy Béla - 17:20" foglalás eltűnik a "Foglalásaim" (`sajat-foglalasok`) listából.
-  * Ha "Nagy Béla" volt kiválasztva a tanárlistából, és az ő időpontjai látszódtak, akkor a `fogadoora-section`-ben a 17:20-as időpontja újra szabaddá válik (zöld gombként jelenik meg).
+  * A foglalás eltűnik a "Foglalásaim" listából.
+  * Ha "Horváth Éva" van kiválasztva a tanárlistából, és az ő időpontjai látszódtak, akkor a 17:00-ás időpontja újra szabaddá válik (zöld gombként jelenik meg).
 
 ### 1.8. Navigációs sávban a dátum megjelenése
 
@@ -94,25 +95,25 @@ Ez a dokumentum a Fogadóóra alkalmazás végponttól végpontig (E2E) tartó t
 * **Lépések**:
     1. Nyissa meg az `index.html` oldalt a böngészőben.
 * **Elvárt eredmény**:
-  * A navigációs sávban (`navbar-brand-title`) a "Fogadóóra" szöveg mellett zárójelben megjelenik az aktuális fogadóóra dátuma ("Fogadóóra (2023-12-01)").
+  * A navigációs sávban a "Fogadóóra" szöveg mellett zárójelben megjelenik az aktuális fogadóóra dátuma ("Fogadóóra (2025-09-02)").
 
 ## 2. Tanári felület (`tanar.html`, `tanar.js`)
 
 ### 2.1. Sikeres tanári bejelentkezés
 
 * **Cél**: Ellenőrizni, hogy a tanár sikeresen be tud jelentkezni a rendszerbe.
-* **Előfeltételek**: Az alkalmazás fut, a `tanar.html` elérhető. A `tesztadatok.sql` alapján "Nagy Béla" tanár létezik. A bejelentkezéshez a "Nagy Béla" névhez tartozó, a backend által elfogadott jelszó szükséges (a `tesztadatok.sql` a jelszó hash-t tartalmazza: `$2b$10$Ds3fc3CLCL67UAYJ9N2vcuxvE9hHiYwShQHDdzyyRJJV1g/DbgeY.`).
+* **Előfeltételek**: Az alkalmazás fut, a `tanar.html` elérhető. A `tesztadatok.sql` alapján "Nagy Béla" tanár létezik. A bejelentkezéshez a "Nagy Béla" névhez tartozó, a backend által elfogadott jelszó szükséges (`nagyb`).
 * **Lépések**:
     1. Nyissa meg a `tanar.html` oldalt a böngészőben.
-    2. A "Név" (`tanar-nev-login`) mezőbe írja be: "Nagy Béla".
-    3. A "Jelszó" (`jelszo-login`) mezőbe írja be a "Nagy Béla" tanárhoz tartozó érvényes jelszót.
+    2. A "Név" mezőbe írja be: "Nagy Béla".
+    3. A "Jelszó" mezőbe írja be a "Nagy Béla" tanárhoz tartozó érvényes jelszót ("nagyb").
     4. Kattintson a "Bejelentkezés" gombra.
 * **Elvárt eredmény**:
-  * A bejelentkezési felület (`login-section`) eltűnik.
-  * A tanári dashboard (`dashboard-section`) megjelenik.
-  * Az üdvözlő üzenet (`udvozlo-uzenet`) "Üdvözöljük, Nagy Béla!".
-  * A tanár terme (`dashboard-terem`) "101-es terem", tanított tárgyai (`dashboard-targyak`) "Matematika, Fizika".
-  * A tanár foglalásai betöltődnek a "Foglalásaim" (`tanari-foglalasok-body`) táblázatba (lásd 2.5. teszteset).
+  * A bejelentkezési felület eltűnik.
+  * A tanári dashboard megjelenik.
+  * Az üdvözlő üzenet: "Üdvözöljük, Nagy Béla!".
+  * A tanár terme "101-es terem", tanított tárgyai "Matematika, Fizika".
+  * A tanár foglalásai betöltődnek a "Foglalásaim" táblázatba (lásd 2.5. teszteset).
   * A `localStorage`-ban tárolódik a `tanarToken` és `tanarData`.
 
 ### 2.2. Sikertelen tanári bejelentkezés (hibás adatok)
@@ -125,18 +126,18 @@ Ez a dokumentum a Fogadóóra alkalmazás végponttól végpontig (E2E) tartó t
     3. A "Jelszó" mezőbe írjon be egy érvénytelen jelszót ("hibasjelszo").
     4. Kattintson a "Bejelentkezés" gombra.
 * **Elvárt eredmény**:
-  * A bejelentkezési felület (`login-section`) továbbra is látható marad.
-  * A `login-error` div-ben hibaüzenet jelenik meg ("Sikertelen bejelentkezés" vagy a backend által küldött konkrét hiba).
+  * A bejelentkezési felület továbbra is látható marad.
+  * A "Bejlentkezés" gomb alatt hibaüzenet jelenik meg ("Hibás felhasználónév vagy jelszó.").
 
 ### 2.3. Tanári kijelentkezés
 
 * **Cél**: Ellenőrizni, hogy a tanár sikeresen ki tud jelentkezni a rendszerből.
 * **Előfeltételek**: A tanár be van jelentkezve ("Nagy Béla", lásd 2.1. teszteset).
 * **Lépések**:
-    1. A tanári dashboardon kattintson a "Kijelentkezés" (`logout-btn`) gombra.
+    1. A tanári dashboardon kattintson a "Kijelentkezés" gombra.
 * **Elvárt eredmény**:
-  * A tanári dashboard (`dashboard-section`) eltűnik.
-  * A bejelentkezési felület (`login-section`) újra megjelenik.
+  * A tanári dashboard eltűnik.
+  * A bejelentkezési felület újra megjelenik.
   * A `localStorage`-ból törlődik a `tanarToken` és `tanarData`.
 
 ### 2.4. Munkamenet megőrzése (oldal újratöltése után)
@@ -147,7 +148,7 @@ Ez a dokumentum a Fogadóóra alkalmazás végponttól végpontig (E2E) tartó t
     1. Jelentkezzen be "Nagy Béla"-ként.
     2. Töltse újra a `tanar.html` oldalt a böngészőben (F5 vagy frissítés gomb).
 * **Elvárt eredmény**:
-  * A tanári dashboard (`dashboard-section`) jelenik meg, nem a bejelentkezési felület.
+  * A tanári dashboard jelenik meg, nem a bejelentkezési felület.
   * Az üdvözlő üzenet és a tanári adatok helyesen jelennek meg ("Nagy Béla" adatai).
 
 ### 2.5. Tanári foglalások megtekintése a dashboardon
@@ -157,18 +158,17 @@ Ez a dokumentum a Fogadóóra alkalmazás végponttól végpontig (E2E) tartó t
 * **Lépések**:
     1. Jelentkezzen be "Nagy Béla"-ként.
 * **Elvárt eredmény**:
-  * A "Foglalásaim" táblázat (`tanari-foglalasok-body`) a következő sorokat tartalmazza:
+  * A "Foglalásaim" táblázat a következő sorokat tartalmazza:
     * Idősáv: "17:00", Tanuló neve: "Teszt Elek", Oktatási azonosítója: "70000000001"
-    * Idősáv: "17:20", Tanuló neve: "Minta Anna", Oktatási azonosítója: "70000000002"
 
 ### 2.6. Üres foglalási lista megtekintése a dashboardon
 
-* **Cél**: Ellenőrizni, hogy a rendszer helyesen jeleníti-e meg, ha a tanárnak nincsenek foglalásai a `tesztadatok.sql` alapján.
-* **Előfeltételek**: "Horváth Éva" tanár be van jelentkezve (a `tesztadatok.sql` szerint nincsenek foglalásai). A bejelentkezéshez a "Horváth Éva" névhez tartozó, a backend által elfogadott jelszó szükséges.
+* **Cél**: Ellenőrizni, hogy a rendszer helyesen jeleníti-e meg, ha a tanárnak nincsenek foglalásai.
+* **Előfeltételek**:"Horváth Éva" tanár be van jelentkezve (a `tesztadatok.sql` szerint nincsenek foglalásai). A bejelentkezéshez a "Horváth Éva" névhez tartozó, a backend által elfogadott jelszó szükséges. 
 * **Lépések**:
     1. Jelentkezzen be "Horváth Éva"-ként.
 * **Elvárt eredmény**:
-  * A "Foglalásaim" táblázat (`tanari-foglalasok-body`) egyetlen sort tartalmaz egy üzenettel, "Nincsenek aktuális foglalások.".
+  * A "Foglalásaim" táblázat egyetlen sort tartalmaz egy üzenettel, "Nincsenek aktuális foglalások.".
 
 ### 2.7. Navigációs sávban a dátum megjelenése (Tanári felület)
 
@@ -177,7 +177,7 @@ Ez a dokumentum a Fogadóóra alkalmazás végponttól végpontig (E2E) tartó t
 * **Lépések**:
     1. Nyissa meg a `tanar.html` oldalt a böngészőben.
 * **Elvárt eredmény**:
-  * A navigációs sávban (`navbar-brand-title`) a "Fogadóóra" szöveg mellett zárójelben megjelenik az aktuális fogadóóra dátuma ("Fogadóóra (2023-12-01)").
+  * A navigációs sávban a "Fogadóóra" szöveg mellett zárójelben megjelenik az aktuális fogadóóra dátuma ("Fogadóóra (2023-12-01)").
 
 ### 2.8. Lejárt/érvénytelen munkamenet kezelése
 
@@ -187,6 +187,6 @@ Ez a dokumentum a Fogadóóra alkalmazás végponttól végpontig (E2E) tartó t
     1. (Szimulált) A tanár be van jelentkezve, de a `localStorage`-ban lévő `tanarToken` már nem érvényes.
     2. Az alkalmazás megpróbálja betölteni a tanári foglalásokat (`loadTanariFoglalasok` függvény hívódik meg, dashboard megjelenítésekor vagy oldalfrissítéskor).
 * **Elvárt eredmény**:
-  * A felhasználó a bejelentkezési felületre (`login-section`) kerül.
+  * A felhasználó a bejelentkezési felületre kerül.
   * Egy figyelmeztető üzenet (alert) jelenik meg, "Lejárt vagy érvénytelen munkamenet. Kérjük, jelentkezzen be újra.".
   * A `localStorage`-ból törlődik a `tanarToken` és `tanarData`.
