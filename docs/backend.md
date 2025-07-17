@@ -39,13 +39,18 @@ A szerver viselkedését a projekt gyökérkönyvtárában található `.env` 
 Az alkalmazás indítása előtt létre kell hozni az adatbázisban a szükséges táblákat (`tanarok`, `foglalasok`), és fel kell tölteni a tanárok adatait. Ez egy SQL inicializáló szkript (pl. a `tesztadatok.sql` fájl) futtatásával történhet.
 
 * **Technológia**: SQLite
+
 * **Könyvtár**: `better-sqlite3`
+
 * **Szerver oldali beállítások kapcsolódáskor**:
+  
   * `PRAGMA foreign_keys = ON;`: A szerver minden adatbázis-kapcsolatnál bekapcsolja ezt az opciót, biztosítva az idegen kulcsok integritását.
   * `PRAGMA journal_mode = WAL;`: A szerver ezt a naplózási módot állítja be a jobb teljesítmény és konkurrenciakezelés érdekében.
-* **Táblák**:
 
+* **Táblák**:
+  
   * **`tanarok` tábla**
+    
     * Célja: A rendszerben regisztrált tanárok adatainak tárolása.
     * Oszlopok:
       * `tanarID` (INTEGER, PRIMARY KEY, AUTOINCREMENT): Egyedi azonosító minden tanárhoz.
@@ -53,8 +58,9 @@ Az alkalmazás indítása előtt létre kell hozni az adatbázisban a szüksége
       * `jelszoHash` (TEXT, NOT NULL): A tanár jelszavának bcrypt hash-e a biztonságos tárolás érdekében.
       * `terem` (TEXT): A tanár fogadóórájának helyszíne (pl. szobaszám). Opcionális.
       * `targyak` (TEXT): A tanár által oktatott tárgyak listája, vesszővel elválasztva. Opcionális.
-
+  
   * **`foglalasok` tábla**
+    
     * Célja: A tanulók által a tanárokhoz lefoglalt időpontok rögzítése az aktuális fogadóórára.
     * Oszlopok:
       * `foglalasID` (INTEGER, PRIMARY KEY, AUTOINCREMENT): Egyedi azonosító minden foglaláshoz.
@@ -94,16 +100,16 @@ Az alkalmazás indítása előtt létre kell hozni az adatbázisban a szüksége
 
 ### Végpontok összefoglaló táblázata
 
-| Metódus | Útvonal                                  | Leírás                                                     | Authentikáció szükséges? |
-|---------|------------------------------------------|------------------------------------------------------------|--------------------------|
-| GET     | `/api/config`                            | Aktuális fogadóóra dátumának lekérdezése.                  | Nem                      |
-| GET     | `/api/tanarok`                           | Összes tanár listázása.                                    | Nem                      |
-| GET     | `/api/tanarok/:tanarID/fogadoora`        | Adott tanár fogadóórájának és idősávjainak lekérdezése.    | Nem                      |
-| POST    | `/api/tanarok/:tanarID/foglalasok`       | Új időpont foglalása adott tanárhoz.                       | Nem                      |
-| DELETE  | `/api/foglalasok`                        | Szülő törli a saját foglalását.                             | Nem                      |
-| GET     | `/api/tanulok/:oktatasiAzonosito/foglalasok` | Adott tanuló összes foglalásának lekérdezése.              | Nem                      |
-| POST    | `/api/auth/login`                        | Tanár bejelentkeztetése.                                   | Nem (de tokent generál)  |
-| GET     | `/api/auth/profil/foglalasok`            | Bejelentkezett tanár foglalásainak listázása.              | Igen                     |
+| Metódus | Útvonal                                      | Leírás                                                  | Authentikáció szükséges? |
+| ------- | -------------------------------------------- | ------------------------------------------------------- | ------------------------ |
+| GET     | `/api/config`                                | Aktuális fogadóóra dátumának lekérdezése.               | Nem                      |
+| GET     | `/api/tanarok`                               | Összes tanár listázása.                                 | Nem                      |
+| GET     | `/api/tanarok/:tanarID/fogadoora`            | Adott tanár fogadóórájának és idősávjainak lekérdezése. | Nem                      |
+| POST    | `/api/tanarok/:tanarID/foglalasok`           | Új időpont foglalása adott tanárhoz.                    | Nem                      |
+| DELETE  | `/api/foglalasok`                            | Szülő törli a saját foglalását.                         | Nem                      |
+| GET     | `/api/tanulok/:oktatasiAzonosito/foglalasok` | Adott tanuló összes foglalásának lekérdezése.           | Nem                      |
+| POST    | `/api/auth/login`                            | Tanár bejelentkeztetése.                                | Nem (de tokent generál)  |
+| GET     | `/api/auth/profil/foglalasok`                | Bejelentkezett tanár foglalásainak listázása.           | Igen                     |
 
 ---
 
@@ -183,7 +189,7 @@ Authentikációt igényelnek - `authenticateToken` middleware.
 ## 7. Szerver indítása és leállítása
 
 * **Indítás**: Az adatbázis inicializálása (táblák létrehozása és tanárok adatainak feltöltése) és a .env fájlban lévő környezeti változók beállítása után a szerver a projekt gyökérkönyvtárából a `node server.js` paranccsal indítható. A szerver a `PORT` környezeti változóban (vagy alapértelmezetten a 3000-es porton) indul el. Induláskor kiírja a konzolra a futási portot, az adatbázis elérési útját és a fogadóóra konfigurációját.
-* **Graceful Shutdown**: A szerver figyeli a `exit`, `SIGHUP`, `SIGINT`, `SIGTERM` eseményeket, és ezek bekövetkeztekor megfelelően lezárja az adatbázis kapcsolatot (`db.close()`) a folyamat leállása előtt.
+* **Leállítás**: A szerver figyeli a `exit`, ``SIGINT`, `SIGTERM` eseményeket, és ezek bekövetkeztekor megfelelően lezárja az adatbázis kapcsolatot (`db.close()`) a folyamat leállása előtt.
 
 ## 8. Statikus fájlok kiszolgálása
 

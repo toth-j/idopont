@@ -4,10 +4,8 @@ const express = require('express');
 const Database = require('better-sqlite3');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const cors = require('cors');
 
 const app = express();
-app.use(cors());
 app.use(express.static('public'));
 app.use(express.json());
 
