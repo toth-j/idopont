@@ -4,10 +4,8 @@ const express = require('express');
 const Database = require('better-sqlite3');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const cors = require('cors');
 
 const app = express();
-app.use(cors());
 app.use(express.static('public'));
 app.use(express.json());
 
@@ -81,9 +79,8 @@ function authenticateToken(req, res, next) {
 
 // 0. Konfigurációs adatok (dátum)
 app.get('/api/config', (req, res) => {
-  res.status(200).json({ date: FOGADOORA_DATUM }); // Konzisztens használat
+  res.status(200).json({ date: FOGADOORA_DATUM }); 
 });
-
 
 // 1. Összes tanár listázása
 app.get('/api/tanarok', (req, res) => {
@@ -273,6 +270,5 @@ app.listen(PORT, () => {
 
 // Graceful shutdown
 process.on('exit', () => db.close());
-process.on('SIGHUP', () => process.exit(128 + 1));
-process.on('SIGINT', () => process.exit(128 + 2));
-process.on('SIGTERM', () => process.exit(128 + 15));
+process.on('SIGINT', () => process.exit());
+process.on('SIGTERM', () => process.exit());

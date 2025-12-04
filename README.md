@@ -25,7 +25,7 @@ A Fogadóóra alkalmazás célja, hogy egyszerű és átlátható platformot biz
     PORT=3000
     DATABASE_PATH=idopontok.db
     JWT_SECRET=secret_key_for_jwt
-    DATE=2025-09-02
+    DATE=2026-09-02
     START=18:00
     END=19:00
     HOSSZ=10
