@@ -1,29 +1,29 @@
-# Fogadóóra alkalmazás specifikáció
+# Időpont foglaló alkalmazás specifikáció
 
-Ez a dokumentum a Fogadóóra alkalmazás rendszertervét és működési specifikációját tartalmazza. Célja, hogy átfogó képet adjon az alkalmazás funkcióiról, architektúrájáról és technikai részleteiről.
+Ez a dokumentum az Időpont foglaló alkalmazás rendszertervét és működési specifikációját tartalmazza. Célja, hogy átfogó képet adjon az alkalmazás funkcióiról, architektúrájáról és technikai részleteiről.
 
 ## Tartalomjegyzék
 
 1. [Bevezetés](#1-bevezetés)
-    * [1.1. Az alkalmazás célja](#11-az-alkalmazás-célja)
-    * [1.2. Főbb funkciók áttekintése](#12-főbb-funkciók-áttekintése)
+   * [1.1. Az alkalmazás célja](#11-az-alkalmazás-célja)
+   * [1.2. Főbb funkciók áttekintése](#12-főbb-funkciók-áttekintése)
 2. [Célközönség és szerepkörök](#2-célközönség-és-szerepkörök)
-    * [2.1. Szülő](#21-szülő)
-    * [2.2. Tanár](#22-tanár)
-    * [2.3. Adminisztrátor (Rendszerüzemeltető)](#23-adminisztrátor-rendszerüzemeltető)
+   * [2.1. Szülő](#21-szülő)
+   * [2.2. Tanár](#22-tanár)
+   * [2.3. Adminisztrátor (Rendszerüzemeltető)](#23-adminisztrátor-rendszerüzemeltető)
 3. [Funkcionális Követelmények](#3-funkcionális-követelmények)
-    * [3.1. Általános funkciók](#31-általános-funkciók)
-    * [3.2. Szülői funkciók](#32-szülői-funkciók)
-    * [3.3. Tanári funkciók](#33-tanári-funkciók)
-    * [3.4. Adminisztratív funkciók (Konfiguráció)](#34-adminisztratív-funkciók-konfiguráció)
+   * [3.1. Általános funkciók](#31-általános-funkciók)
+   * [3.2. Szülői funkciók](#32-szülői-funkciók)
+   * [3.3. Tanári funkciók](#33-tanári-funkciók)
+   * [3.4. Adminisztratív funkciók (Konfiguráció)](#34-adminisztratív-funkciók-konfiguráció)
 4. [Rendszerarchitektúra](#4-rendszerarchitektúra)
-    * [4.1. Frontend](#41-frontend)
-    * [4.2. Backend](#42-backend)
-    * [4.3. Adatbázis](#43-adatbázis)
+   * [4.1. Frontend](#41-frontend)
+   * [4.2. Backend](#42-backend)
+   * [4.3. Adatbázis](#43-adatbázis)
 5. [Technológiai Stack](#5-technológiai-stack)
 6. [Adatmodell](#6-adatmodell)
-    * [6.1. `tanarok` tábla](#61-tanarok-tábla)
-    * [6.2. `foglalasok` tábla](#62-foglalasok-tábla)
+   * [6.1. `tanarok` tábla](#61-tanarok-tábla)
+   * [6.2. `foglalasok` tábla](#62-foglalasok-tábla)
 7. [API végpontok (összefoglaló)](#7-api-végpontok-összefoglaló)
 8. [Konfiguráció](#8-konfiguráció)
 9. [Biztonság](#9-biztonság)
@@ -139,9 +139,7 @@ Az alkalmazás egy klasszikus háromrétegű webalkalmazás:
 * **Frontend**: HTML5, CSS3, JavaScript (ES6+), Bootstrap 5
 * **Authentikáció**: JSON Web Tokens (JWT)
 * **Jelszókezelés**: bcrypt (jelszavak hashelésére)
-* **Egyéb**: `dotenv` (környezeti változók kezelésére), `cors` (Cross-Origin Resource Sharing).
-
----
+* **Egyéb**: `dotenv` (környezeti változók kezelésére)
 
 ## 6. Adatmodell
 
@@ -175,16 +173,16 @@ Az adatbázis két fő táblából áll:
 
 ## 7. API végpontok (összefoglaló)
 
-| Metódus | Útvonal                                  | Leírás                                                     | Authentikáció szükséges? |
-|---------|------------------------------------------|------------------------------------------------------------|--------------------------|
-| GET     | `/api/config`                            | Aktuális fogadóóra dátumának lekérdezése.                  | Nem                      |
-| GET     | `/api/tanarok`                           | Összes tanár listázása.                                    | Nem                      |
-| GET     | `/api/tanarok/:tanarID/fogadoora`        | Adott tanár fogadóórájának és idősávjainak lekérdezése.    | Nem                      |
-| POST    | `/api/tanarok/:tanarID/foglalasok`       | Új időpont foglalása adott tanárhoz.                       | Nem                      |
-| DELETE  | `/api/foglalasok`                        | Szülő törli a saját foglalását (query: `tanarID`, `oktatasiAzonosito`). | Nem                      |
-| GET     | `/api/tanulok/:oktatasiAzonosito/foglalasok` | Adott tanuló összes foglalásának lekérdezése.              | Nem                      |
-| POST    | `/api/auth/login`                        | Tanár bejelentkeztetése.                                   | Nem (de tokent generál)  |
-| GET     | `/api/auth/profil/foglalasok`            | Bejelentkezett tanár foglalásainak listázása.              | Igen (JWT)               |
+| Metódus | Útvonal                                      | Leírás                                                                  | Authentikáció szükséges? |
+| ------- | -------------------------------------------- | ----------------------------------------------------------------------- | ------------------------ |
+| GET     | `/api/config`                                | Aktuális fogadóóra dátumának lekérdezése.                               | Nem                      |
+| GET     | `/api/tanarok`                               | Összes tanár listázása.                                                 | Nem                      |
+| GET     | `/api/tanarok/:tanarID/fogadoora`            | Adott tanár fogadóórájának és idősávjainak lekérdezése.                 | Nem                      |
+| POST    | `/api/tanarok/:tanarID/foglalasok`           | Új időpont foglalása adott tanárhoz.                                    | Nem                      |
+| DELETE  | `/api/foglalasok`                            | Szülő törli a saját foglalását (query: `tanarID`, `oktatasiAzonosito`). | Nem                      |
+| GET     | `/api/tanulok/:oktatasiAzonosito/foglalasok` | Adott tanuló összes foglalásának lekérdezése.                           | Nem                      |
+| POST    | `/api/auth/login`                            | Tanár bejelentkeztetése.                                                | Nem (de tokent generál)  |
+| GET     | `/api/auth/profil/foglalasok`                | Bejelentkezett tanár foglalásainak listázása.                           | Igen (JWT)               |
 
 ---
 
