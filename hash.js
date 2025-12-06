@@ -1,4 +1,4 @@
-// hash_password.js
+// hash.js
 const bcrypt = require('bcrypt');
 const readline = require('readline');
 

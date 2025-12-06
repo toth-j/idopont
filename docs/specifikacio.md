@@ -4,32 +4,34 @@ Ez a dokumentum az Időpont foglaló alkalmazás rendszertervét és működési
 
 ## Tartalomjegyzék
 
-1. [Bevezetés](#1-bevezetés)
-   * [1.1. Az alkalmazás célja](#11-az-alkalmazás-célja)
-   * [1.2. Főbb funkciók áttekintése](#12-főbb-funkciók-áttekintése)
-2. [Célközönség és szerepkörök](#2-célközönség-és-szerepkörök)
-   * [2.1. Szülő](#21-szülő)
-   * [2.2. Tanár](#22-tanár)
-   * [2.3. Adminisztrátor (Rendszerüzemeltető)](#23-adminisztrátor-rendszerüzemeltető)
-3. [Funkcionális Követelmények](#3-funkcionális-követelmények)
-   * [3.1. Általános funkciók](#31-általános-funkciók)
-   * [3.2. Szülői funkciók](#32-szülői-funkciók)
-   * [3.3. Tanári funkciók](#33-tanári-funkciók)
-   * [3.4. Adminisztratív funkciók (Konfiguráció)](#34-adminisztratív-funkciók-konfiguráció)
-4. [Rendszerarchitektúra](#4-rendszerarchitektúra)
-   * [4.1. Frontend](#41-frontend)
-   * [4.2. Backend](#42-backend)
-   * [4.3. Adatbázis](#43-adatbázis)
-5. [Technológiai Stack](#5-technológiai-stack)
-6. [Adatmodell](#6-adatmodell)
-   * [6.1. `tanarok` tábla](#61-tanarok-tábla)
-   * [6.2. `foglalasok` tábla](#62-foglalasok-tábla)
-7. [API végpontok (összefoglaló)](#7-api-végpontok-összefoglaló)
-8. [Konfiguráció](#8-konfiguráció)
-9. [Biztonság](#9-biztonság)
-10. [Felhasználói felület](#10-felhasználói-felület)
-    * [10.1. Szülői felület (`index.html`)](#101-szülői-felület-indexhtml)
-    * [10.2. Tanári felület (`tanar.html`)](#102-tanári-felület-tanarhtml)
+- [Időpont foglaló alkalmazás specifikáció](#időpont-foglaló-alkalmazás-specifikáció)
+  - [Tartalomjegyzék](#tartalomjegyzék)
+  - [1. Bevezetés](#1-bevezetés)
+    - [1.1. Az alkalmazás célja](#11-az-alkalmazás-célja)
+    - [1.2. Főbb funkciók áttekintése](#12-főbb-funkciók-áttekintése)
+  - [2. Célközönség és szerepkörök](#2-célközönség-és-szerepkörök)
+    - [2.1. Szülő](#21-szülő)
+    - [2.2. Tanár](#22-tanár)
+    - [2.3. Adminisztrátor (Rendszerüzemeltető)](#23-adminisztrátor-rendszerüzemeltető)
+  - [3. Funkcionális követelmények](#3-funkcionális-követelmények)
+    - [3.1. Általános funkciók](#31-általános-funkciók)
+    - [3.2. Szülői funkciók](#32-szülői-funkciók)
+    - [3.3. Tanári funkciók](#33-tanári-funkciók)
+    - [3.4. Adminisztratív funkciók (konfiguráció)](#34-adminisztratív-funkciók-konfiguráció)
+  - [4. Rendszerarchitektúra](#4-rendszerarchitektúra)
+    - [4.1. Frontend](#41-frontend)
+    - [4.2. Backend](#42-backend)
+    - [4.3. Adatbázis](#43-adatbázis)
+  - [5. Technológiai stack](#5-technológiai-stack)
+  - [6. Adatmodell](#6-adatmodell)
+    - [6.1. `tanarok` tábla](#61-tanarok-tábla)
+    - [6.2. `foglalasok` tábla](#62-foglalasok-tábla)
+  - [7. API végpontok (összefoglaló)](#7-api-végpontok-összefoglaló)
+  - [8. Konfiguráció](#8-konfiguráció)
+  - [9. Biztonság](#9-biztonság)
+  - [10. Felhasználói felület](#10-felhasználói-felület)
+    - [10.1. Szülői Felület (`index.html`)](#101-szülői-felület-indexhtml)
+    - [10.2. Tanári Felület (`tanar.html`)](#102-tanári-felület-tanarhtml)
 
 ---
 
@@ -73,15 +75,17 @@ Az a személy vagy csoport, aki felelős az alkalmazás technikai működtetés�
 ### 3.2. Szülői funkciók
 
 * **Tanulói adatok megadása**: A szülőnek meg kell adnia a tanuló nevét és 11 jegyű oktatási azonosítóját a foglalási folyamat megkezdéséhez.
-* **Tanárválasztás**: A rendszer listázza az elérhető tanárokat, akik közül a szülő választhat.
-* **Időpontok megtekintése**: A kiválasztott tanár szabad és foglalt időpontjainak megjelenítése.
-  * Ha a tanulónak már van foglalása az adott tanárhoz, erről figyelmeztetés jelenik meg, és újabb foglalás nem lehetséges ehhez a tanárhoz.
+* **Tanárválasztás**: A rendszer legördülő listában (`<select>` elem) mutatja az elérhető tanárokat, akik közül a szülő választhat.
+* **Időpontok megtekintése**: A kiválasztott tanár szabad és foglalt időpontjainak megjelenítése csak akkor lehetséges, ha a tanulónak még nincs foglalása az adott tanárhoz.
+  * Ha a tanulónak már van foglalása az adott tanárhoz, a fogadóóra szekció rejtett marad.
+  * A szabad időpontok zöld gombokkal, a foglaltak piros, inaktív gombokkal jelennek meg.
 * **Időpontfoglalás**:
   * A szülő kiválaszthat egy szabad idősávot.
   * A rendszer ellenőrzi, hogy a tanulónak az adott idősávban nincs-e már foglalása másik tanárnál.
   * A foglalás előtt megerősítést kér a rendszertől.
+  * Sikeres foglalás után a fogadóóra szekció rejtett marad, és a foglalás megjelenik a "Saját foglalások" listában.
 * **Saját foglalások megtekintése**: A szülő megtekintheti gyermeke aktuális foglalásait (tanár neve, idősáv).
-* **Foglalás lemondása**: A szülő lemondhatja meglévő foglalását. A lemondás megerősítést igényel.
+* **Foglalás lemondása**: A szülő lemondhatja meglévő foglalását. A lemondás megerősítést igényel. Lemondás után az időpontok újra megjelennek a tanár fogadóórájaiban (ha az meg van jelenítve).
 * **Dinamikus frissítés**: Foglalás vagy lemondás után a felület automatikusan frissül.
 
 ### 3.3. Tanári funkciók
@@ -92,7 +96,7 @@ Az a személy vagy csoport, aki felelős az alkalmazás technikai működtetés�
   * A hozzá tartozó összes foglalás listázása: idősáv, tanuló neve, tanuló oktatási azonosítója.
   * Ha nincsenek foglalások, erről tájékoztató üzenet jelenik meg.
 * **Kijelentkezés**: Lehetőség a rendszerből való biztonságos kijelentkezésre.
-* **Munkamenet kezelése**: Érvényes munkamenet esetén automatikus beléptetés a dashboardra. Lejárt/érvénytelen munkamenet esetén visszairányítás a bejelentkezési oldalra.
+* **Munkamenet kezelése**: Érvényes munkamenet esetén automatikus beléptetés a dashboardra. A tanár adatait és a tokent a böngésző `sessionStorage`-ében tároljuk (csak az aktuális munkamenet alatt). Lejárt/érvénytelen munkamenet esetén visszairányítás a bejelentkezési oldalra.
 
 ### 3.4. Adminisztratív funkciók (konfiguráció)
 
@@ -216,8 +220,8 @@ A felhasználói felület Bootstrap keretrendszer segítségével reszponzív é
 
 * **Navigációs sáv**: Linkek a szülői és tanári oldalra, valamint a fogadóóra aktuális dátumának megjelenítése.
 * **Tanuló adatai szekció**: Űrlap a tanuló nevének és oktatási azonosítójának bekérésére.
-* **Tanárválasztó szekció**: Lista a választható tanárokról (név, tárgyak).
-* **Fogadóóra szekció**: A kiválasztott tanár adatai (név, terem, tárgyak) és a szabad/foglalt időpontok gombok formájában. Figyelmeztető üzenet, ha már van foglalás az adott tanárhoz.
+* **Tanárválasztó szekció**: Legördülő lista (`<select>` elem) a választható tanárokról (név, tárgyak).
+* **Fogadóóra szekció**: A kiválasztott tanár adatai (név, terem, tárgyak) és a szabad/foglalt időpontok gombok formájában. Ez a szekció csak akkor látható, ha a tanulónak még nincs foglalása az adott tanárhoz.
 * **Foglalásaim szekció**: A bejelentkezett tanuló aktuális foglalásainak listája, lemondási lehetőséggel.
 
 ### 10.2. Tanári Felület (`tanar.html`)

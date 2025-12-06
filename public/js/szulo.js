@@ -4,7 +4,7 @@ const formTanuloNeveInput = document.getElementById('form-tanulo-neve');
 const formOktatasiAzonositoInput = document.getElementById('form-oktatasi-azonosito');
 
 const tanarokListaSection = document.getElementById('tanarok-lista-section');
-const tanarokListaDiv = document.getElementById('tanarok-lista');
+const tanarokSelectElem = document.getElementById('tanarok-select');
 
 const fogadooraSection = document.getElementById('fogadoora-section');
 const valasztottTanarNevElem = document.getElementById('valasztott-tanar-nev');
@@ -16,9 +16,7 @@ const foglalasaimSection = document.getElementById('foglalasaim-section');
 const foglalasaimTanuloInfoSpan = document.getElementById('foglalasaim-tanulo-info');
 const sajatFoglalasokDiv = document.getElementById('sajat-foglalasok');
 
-let tanarokCache = []; // Gyorsítótár a tanároknak
-let sajatFoglalasokCache = []; // Gyorsítótár a saját foglalásoknak
-let aktivTanarId = null;
+let sajatFoglalasok = [];
 let aktualisTanuloNeve = '';
 let aktualisOktatasiAzonosito = '';
 
@@ -28,11 +26,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const response = await fetch('/api/config');
     if (response.ok) {
       const config = await response.json();
-      if (config.date) {
-        document.getElementById('navbar-brand-title').textContent = `Fogadóóra (${config.date})`;
-      }
+      document.getElementById('navbar-brand-title').textContent = `Fogadóóra (${config.date})`;
     }
-  } catch (error) { console.error('Hiba a konfiguráció betöltésekor:', error); }
+  } catch (error) {
+    console.error('Hiba a dátum betöltésekor:', error);
+  }
 });
 
 // Tanulói adatok kezelése
@@ -46,13 +44,11 @@ tanuloAdatokForm.addEventListener('submit', async (e) => {
   }
   aktualisTanuloNeve = tanuloNeve;
   aktualisOktatasiAzonosito = oktatasiAzonosito;
-  tanuloAdatokSection.style.display = 'none';
   tanarokListaSection.style.display = 'block';
   foglalasaimSection.style.display = 'block';
-  foglalasaimTanuloInfoSpan.textContent = `${aktualisTanuloNeve} ${aktualisOktatasiAzonosito}`;
 
-  await loadTanarok(); // Először a tanárokat töltjük be, hogy a cache rendelkezésre álljon
-  await loadSajatFoglalasok(aktualisOktatasiAzonosito); // Majd a saját foglalásokat, ami használja a tanarokCache-t
+  await loadTanarok();
+  await loadSajatFoglalasok(aktualisOktatasiAzonosito);
 });
 
 // Tanárok betöltése
@@ -60,62 +56,55 @@ async function loadTanarok() {
   try {
     const response = await fetch('/api/tanarok');
     if (!response.ok) throw new Error('Tanárok betöltése sikertelen');
-    tanarokCache = await response.json();
+    const tanarok = await response.json();
 
-    tanarokListaDiv.innerHTML = '';
-    tanarokCache.forEach(tanar => {
-      const tanarElem = document.createElement('a');
-      tanarElem.href = '#';
-      tanarElem.classList.add('list-group-item', 'list-group-item-action');
-      tanarElem.textContent = `${tanar.nev} (${tanar.targyak || 'Nincs megadva'})`;
-
-      tanarElem.addEventListener('click', (e) => {
-        e.preventDefault();
-        loadFogadoora(tanar.tanarID);
-        // Aktív elem jelölése (először eltávolítjuk az aktív osztályt az összes elemről, utána hozzáadjuk az aktuálishoz)
-        document.querySelectorAll('#tanarok-lista .list-group-item-action').forEach(item => item.classList.remove('active'));
-        tanarElem.classList.add('active');
-      });
-      tanarokListaDiv.appendChild(tanarElem);
+    tanarokSelectElem.innerHTML = '<option value="">-- Válasszon tanárt --</option>';
+    tanarok.forEach(tanar => {
+      const option = document.createElement('option');
+      option.value = tanar.tanarID;
+      option.textContent = `${tanar.nev} (${tanar.targyak || 'Tantárgy nincs megadva'})`;
+      tanarokSelectElem.appendChild(option);
     });
   } catch (error) {
     console.error(error);
-    tanarokListaDiv.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+    tanarokSelectElem.innerHTML = `<option value="">Hiba: ${error.message}</option>`;
   }
 }
 
+// Eseményfigyelő a select elemhez
+tanarokSelectElem.addEventListener('change', (e) => {
+  const tanarID = Number(e.target.value);
+  if (tanarID) {
+    loadFogadoora(tanarID);
+  } else {
+    // Kiválasztás törlése: elrejtjük a fogadóóra szekciót
+    fogadooraSection.style.display = 'none';
+  }
+});
+
 // Egy tanár fogadóórájának betöltése
 async function loadFogadoora(tanarID) {
-  aktivTanarId = tanarID;
   try {
     const response = await fetch(`/api/tanarok/${tanarID}/fogadoora`);
     if (!response.ok) throw new Error('Fogadóóra betöltése sikertelen');
     const data = await response.json();
 
-    valasztottTanarNevElem.textContent = data.nev;
-    valasztottTanarTeremSpan.textContent = data.terem || 'Nincs megadva';
-    valasztottTanarTargyakSpan.textContent = data.targyak || 'Nincs megadva';
-    idopontokListaDiv.innerHTML = ''; // Előző tartalom törlése
-
-    // Távolítsuk el az előző tanárra vonatkozó figyelmeztetést, ha volt
-    const existingWarning = fogadooraSection.querySelector('.alert-warning.foglalas-figyelmeztetes-idopontok-helyett');
-    if(existingWarning) {
-        existingWarning.remove();
-    }
-
     // Ellenőrizzük, hogy van-e már foglalás ehhez a tanárhoz
-    const vanMarFoglalasEhhezATanarhoz = sajatFoglalasokCache.some(
-      foglalas => String(foglalas.tanarID) === String(tanarID)
+    const vanMarFoglalasEhhezATanarhoz = sajatFoglalasok.some(
+      foglalas => foglalas.tanarID === tanarID
     );
 
     if (vanMarFoglalasEhhezATanarhoz) {
-      // Ha van foglalás, üzenetet jelenítünk meg a gombok helyett
-      const warningMessage = document.createElement('p');
-      warningMessage.classList.add('alert', 'alert-warning', 'mt-3', 'foglalas-figyelmeztetes-idopontok-helyett');
-      warningMessage.textContent = `Már van foglalása ehhez a tanárhoz. Újabb foglalás nem lehetséges.`;
-      idopontokListaDiv.appendChild(warningMessage);
+      // Ha van foglalás, elrejtjük a fogadóóra szekciót
+      fogadooraSection.style.display = 'none';
     } else {
-      // Ha nincs foglalás, megjelenítjük az időpontokat
+      // Ha nincs foglalás, megjelenítsük a tanár adatait és az időpontokat
+      valasztottTanarNevElem.textContent = data.nev;
+      valasztottTanarTeremSpan.textContent = data.terem || 'Nincs megadva';
+      valasztottTanarTargyakSpan.textContent = data.targyak || 'Nincs megadva';
+      
+      // Megjelenítjük az időpontokat
+      idopontokListaDiv.innerHTML = ''; // Előző tartalom törlése
       if (data.idopontok && data.idopontok.length > 0) {
         data.idopontok.forEach(idopont => {
           const gomb = document.createElement('button');
@@ -124,7 +113,7 @@ async function loadFogadoora(tanarID) {
           gomb.textContent = idopont.idosav;
           if (idopont.statusz === 'szabad') {
             gomb.classList.add('btn-success');
-            gomb.addEventListener('click', () => kezdemenyezFoglalas(tanarID, data.nev, idopont.idosav));
+            gomb.addEventListener('click', () => startFoglalas(tanarID, data.nev, idopont.idosav));
           } else {
             gomb.classList.add('btn-danger');
             gomb.disabled = true;
@@ -134,8 +123,8 @@ async function loadFogadoora(tanarID) {
       } else {
         idopontokListaDiv.innerHTML = '<p>Nincsenek elérhető időpontok.</p>';
       }
+      fogadooraSection.style.display = 'block';
     }
-    fogadooraSection.style.display = 'block';
   } catch (error) {
     console.error(error);
     idopontokListaDiv.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
@@ -143,10 +132,10 @@ async function loadFogadoora(tanarID) {
   }
 }
 
-// Foglalás kezdeményezése
-async function kezdemenyezFoglalas(tanarID, tanarNev, idosav) {
-  // Ellenőrizzük a cache alapján, hogy az idősáv szerepel-e már a "Foglalásaim" között
-  const idosavMarFoglaltMasikTanarnal = sajatFoglalasokCache.some(
+// Foglalás indítása
+async function startFoglalas(tanarID, tanarNev, idosav) {
+  // Ellenőrizzük, hogy az idősáv szerepel-e már a "Foglalásaim" között
+  const idosavMarFoglaltMasikTanarnal = sajatFoglalasok.some(
     foglalas => foglalas.idosav === idosav
   );
   if (idosavMarFoglaltMasikTanarnal) {
@@ -169,13 +158,12 @@ async function kezdemenyezFoglalas(tanarID, tanarNev, idosav) {
     });
     const result = await response.json();
     if (!response.ok) {
-      throw new Error(result.hiba || 'Foglalás sikertelen');
+      throw new Error('A foglalás sikertelen');
     }
-    // Először frissítjük a "Foglalásaim" listát, hogy a loadFogadoora már az új állapotot lássa
-    await loadSajatFoglalasok(aktualisOktatasiAzonosito); 
-    if (aktivTanarId) {
-      loadFogadoora(aktivTanarId); // Frissítjük az aktuális tanár nézetét
-    }
+    // Frissítjük a "Foglalásaim" listát
+    await loadSajatFoglalasok(aktualisOktatasiAzonosito);
+    // Elrejtjük az időpontokat
+    fogadooraSection.style.display = 'none';
   } catch (error) {
     alert(`Hiba: ${error.message}`);
   }
@@ -188,18 +176,16 @@ async function loadSajatFoglalasok(oktatasiAzonosito) {
   try {
     const response = await fetch(`/api/tanulok/${oktatasiAzonosito}/foglalasok`);
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.hiba || `Saját foglalások lekérdezése sikertelen (státusz: ${response.status})`);
+      throw new Error(`A saját foglalások lekérdezése sikertelen (státusz: ${response.status})`);
     }
-    const talaltFoglalasok = await response.json();
-    sajatFoglalasokCache = talaltFoglalasok || []; // Gyorsítótár frissítése
+    sajatFoglalasok = await response.json();
 
-    if (talaltFoglalasok && talaltFoglalasok.length > 0) {
+    if (sajatFoglalasok.length > 0) {
       // A DOM frissítése
-      sajatFoglalasokDiv.innerHTML = ''; 
+      sajatFoglalasokDiv.innerHTML = '';
       const ul = document.createElement('ul');
       ul.classList.add('list-group');
-      talaltFoglalasok.forEach(foglalas => {
+      sajatFoglalasok.forEach(foglalas => {
         const li = document.createElement('li');
         li.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-center');
         li.innerHTML = `
@@ -222,14 +208,14 @@ async function loadSajatFoglalasok(oktatasiAzonosito) {
   } catch (error) {
     console.error('Hiba a saját foglalások keresésekor:', error);
     sajatFoglalasokDiv.innerHTML = '<p class="alert alert-danger">Hiba történt a foglalások keresése közben.</p>';
-    sajatFoglalasokCache = []; // Hiba esetén ürítjük a cache-t
+    sajatFoglalasok = [];
   }
 }
 
 // Foglalás lemondása
 async function cancelFoglalas(tanarID, oktatasiAzonosito) {
   if (!confirm('Biztosan le szeretné mondani ezt a foglalást?')) {
-    return; // A felhasználó megszakította a műveletet
+    return;
   }
 
   try {
@@ -237,12 +223,11 @@ async function cancelFoglalas(tanarID, oktatasiAzonosito) {
       method: 'DELETE'
     });
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ hiba: 'Ismeretlen hiba' }));
-      throw new Error(errorData.hiba || `Lemondás sikertelen (státusz: ${response.status})`);
+      throw new Error(`A lemondás sikertelen (státusz: ${response.status})`);
     }
-    await loadSajatFoglalasok(oktatasiAzonosito); // Frissítjük a "Foglalásaim" listát
-    if (aktivTanarId && String(aktivTanarId) === String(tanarID)) {
-      loadFogadoora(aktivTanarId); // Frissítjük az aktuális tanár idősávjait is, ha az volt nyitva
+    await loadSajatFoglalasok(oktatasiAzonosito); // Frissítjük a "Foglalások" listát
+    if (tanarokSelectElem.value && tanarokSelectElem.value === tanarID) {
+      loadFogadoora(tanarokSelectElem.value); // Frissítjük az aktuális tanár idősávjait is, ha az volt nyitva
     }
   } catch (error) {
     alert(`Hiba a lemondáskor: ${error.message}`);

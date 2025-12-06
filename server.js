@@ -36,29 +36,24 @@ function generateTimeSlots(startTimeStr, endTimeStr, intervalMinutes, existingBo
   const [startHour, startMinute] = startTimeStr.split(':').map(Number);
   const [endHour, endMinute] = endTimeStr.split(':').map(Number);
 
-  let currentHour = startHour;
-  let currentMinute = startMinute;
-  while (currentHour < endHour || (currentHour === endHour && currentMinute < endMinute)) {
-    const timeStr = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
+  let currentTime = new Date();
+  currentTime.setHours(startHour, startMinute, 0, 0);
+  const endTime = new Date();
+  endTime.setHours(endHour, endMinute, 0, 0);
+
+  while (currentTime < endTime) {
+    const timeStr = currentTime.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' });
     const booking = existingBookings.find(b => b.idosav === timeStr);
-    if (booking) {
-      slots.push({
-        idosav: timeStr,
-        statusz: 'foglalt',
-        foglaloAdatai: {
-          tanuloNeve: booking.tanuloNeve,
-          oktatasiAzonosito: booking.oktatasiAzonosito
-        }
-      });
-    } else {
-      slots.push({ idosav: timeStr, statusz: 'szabad' });
-    }
-    currentMinute += intervalMinutes;
-    if (currentMinute >= 60) {
-      currentHour += Math.floor(currentMinute / 60);
-      currentMinute %= 60;
-    }
+    
+    slots.push({
+      idosav: timeStr,
+      statusz: booking ? 'foglalt' : 'szabad',
+      ...(booking && { foglaloAdatai: { tanuloNeve: booking.tanuloNeve, oktatasiAzonosito: booking.oktatasiAzonosito } })
+    });
+
+    currentTime.setMinutes(currentTime.getMinutes() + intervalMinutes);
   }
+
   return slots;
 }
 
@@ -212,7 +207,7 @@ app.get('/api/tanulok/:oktatasiAzonosito/foglalasok', (req, res) => {
   }
 });
 
-// --- Tanári (hitelesítést igénylő) végpontok ---
+// --- Tanári végpontok ---
 
 // 6. Tanár bejelentkezése
 app.post('/api/auth/login', (req, res) => {

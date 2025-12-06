@@ -36,7 +36,7 @@ INSERT INTO foglalasok (tanarID, idosav, tanuloNeve, oktatasiAzonosito) VALUES
 -- Kiss Máriához (TanarID=2)
 INSERT INTO foglalasok (tanarID, idosav, tanuloNeve, oktatasiAzonosito) VALUES
 (2, '17:10', 'Próba Péter', '70000000003'),
-(2, '18:00', 'Gyakorló Gréta', '70000000004');
+(2, '17:50', 'Gyakorló Gréta', '70000000004');
 
 -- Szabó Istvánhoz (TanarID=3)
 INSERT INTO foglalasok (tanarID, idosav, tanuloNeve, oktatasiAzonosito) VALUES

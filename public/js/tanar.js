@@ -9,51 +9,28 @@ const dashboardTargyakSpan = document.getElementById('dashboard-targyak');
 const tanariFoglalasokBody = document.getElementById('tanari-foglalasok-body');
 const logoutBtn = document.getElementById('logout-btn');
 
-const API_URL = '';
-
 // Oldal betöltésekor
 document.addEventListener('DOMContentLoaded', async () => {
     // Dátum betöltése a navigációba
     try {
-        const response = await fetch(`${API_URL}/api/config`);
+        const response = await fetch('/api/config');
         if (response.ok) {
             const config = await response.json();
-            if (config.date) {
-                document.getElementById('navbar-brand-title').textContent = `Fogadóóra (${config.date})`;
-            }
+            document.getElementById('navbar-brand-title').textContent = `Fogadóóra (${config.date})`;
         }
     } catch (error) { console.error('Hiba a konfiguráció betöltésekor:', error); }
-    checkLoginState(); // Login állapot ellenőrzése a dátum betöltése után
-});
-
-// Ellenőrzi, van-e token, és megjeleníti a login szakaszt vagy a dashboardot
-function checkLoginState() {
-    const token = localStorage.getItem('tanarToken');
-    const tanarData = JSON.parse(localStorage.getItem('tanarData'));
-
-    if (!token || !tanarData) {
+    const tanarToken = sessionStorage.getItem('tanarToken');
+    const tanarData = JSON.parse(sessionStorage.getItem('tanarData'));
+    if (!tanarToken || !tanarData) {
         showLogin();
     } else {
-        showDashboard(tanarData, token);
+        showDashboard(tanarData, tanarToken);
     }
-}
+});
 
 function showLogin() {
     loginSection.style.display = 'block';
     dashboardSection.style.display = 'none';
-    localStorage.removeItem('tanarToken');
-    localStorage.removeItem('tanarData');
-}
-
-async function showDashboard(tanar, token) {
-    loginSection.style.display = 'none';
-    dashboardSection.style.display = 'block';
-
-    udvozloUzenetH1.textContent = `Üdvözöljük, ${tanar.nev}!`;
-    dashboardTeremSpan.textContent = tanar.terem || 'Nincs megadva';
-    dashboardTargyakSpan.textContent = tanar.targyak || 'Nincs megadva';
-
-    await loadTanariFoglalasok(token);
 }
 
 // Bejelentkezés
@@ -62,20 +39,20 @@ loginForm.addEventListener('submit', async (e) => {
     loginErrorDiv.textContent = '';
     const nev = document.getElementById('tanar-nev-login').value;
     const jelszo = document.getElementById('jelszo-login').value;
-
     try {
-        const response = await fetch(`${API_URL}/api/auth/login`, {
+        const response = await fetch('/api/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nev, jelszo })
         });
         const data = await response.json();
         if (!response.ok) {
-            throw new Error(data.hiba || 'Sikertelen bejelentkezés');
+            throw new Error('Sikertelen bejelentkezés');
         }
 
-        localStorage.setItem('tanarToken', data.token);
-        localStorage.setItem('tanarData', JSON.stringify(data.tanar));
+        sessionStorage.setItem('tanarToken', data.token);
+        sessionStorage.setItem('tanarData', JSON.stringify(data.tanar));
+        loginForm.reset();
         showDashboard(data.tanar, data.token);
     } catch (error) {
         console.error(error);
@@ -84,16 +61,23 @@ loginForm.addEventListener('submit', async (e) => {
 });
 
 // Kijelentkezés
-if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
-        showLogin();
-    });
-}
+logoutBtn.addEventListener('click', () => {
+    sessionStorage.removeItem('tanarToken');
+    sessionStorage.removeItem('tanarData');
+    showLogin();
+});
 
-// Tanári foglalások betöltése
-async function loadTanariFoglalasok(token) {
+// Dashboard megjelenítése
+async function showDashboard(tanar, token) {
+    loginSection.style.display = 'none';
+    dashboardSection.style.display = 'block';
+
+    udvozloUzenetH1.textContent = `Üdvözöljük, ${tanar.nev}!`;
+    dashboardTeremSpan.textContent = tanar.terem || 'Nincs megadva';
+    dashboardTargyakSpan.textContent = tanar.targyak || 'Nincs megadva';
+
     try {
-        const response = await fetch(`${API_URL}/api/auth/profil/foglalasok`, {
+        const response = await fetch('/api/auth/profil/foglalasok', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!response.ok) {
@@ -104,7 +88,6 @@ async function loadTanariFoglalasok(token) {
             throw new Error('Foglalások betöltése sikertelen');
         }
         const foglalasok = await response.json();
-
         tanariFoglalasokBody.innerHTML = '';
         if (foglalasok.length > 0) {
             foglalasok.forEach(foglalas => {
@@ -120,7 +103,6 @@ async function loadTanariFoglalasok(token) {
         } else {
             tanariFoglalasokBody.innerHTML = '<tr><td colspan="3" class="text-center">Nincsenek aktuális foglalások.</td></tr>';
         }
-
     } catch (error) {
         console.error(error);
         tanariFoglalasokBody.innerHTML = `<tr><td colspan="3" class="text-center text-danger">${error.message}</td></tr>`;

@@ -37,21 +37,25 @@
             <form id="tanulo-adatok-form" class="col-md-6">
                 <div class="mb-3">
                     <label for="form-tanulo-neve" class="form-label">Tanuló neve:</label>
-                    <input type="text" class="form-control" id="form-tanulo-neve" required>
+                    <input type="text" class="form-control" id="form-tanulo-neve" required autofocus>
                 </div>
                 <div class="mb-3">
-                    <label for="form-oktatasi-azonosito" class="form-label">Oktatási azonosító:</label>
+                    <label for="form-oktatasi-azonosito" class="form-label">Oktatási azonosítója:</label>
                     <input type="text" class="form-control" id="form-oktatasi-azonosito" required pattern="[0-9]{11}" title="11 jegyű szám">
                 </div>
-                <button type="submit" class="btn btn-primary">Tovább az időpontfoglaláshoz</button>
+                <button type="submit" class="btn btn-primary">Időpont foglalása</button>
             </form>
         </section>
 
         <!-- Tanárok listája -->
         <section id="tanarok-lista-section" class="mb-5 col-md-8" style="display: none;">
-            <h2>Válasszon tanárt</h2>
-            <div id="tanarok-lista" class="list-group">
-                <!-- Tanárok dinamikusan töltődnek ide -->
+            <h2>Tanárok</h2>
+            <div class="mb-3">
+                <label for="tanarok-select" class="form-label">Válasszon tanárt:</label>
+                <select id="tanarok-select" class="form-select">
+                    <option value="">-- Válasszon tanárt --</option>
+                    <!-- Tanárok dinamikusan töltődnek ide -->
+                </select>
             </div>
         </section>
 
@@ -68,7 +72,7 @@
 
         <!-- Foglalásaim -->
         <section id="foglalasaim-section" class="mb-5 col-md-8" style="display: none;">
-            <h2>Foglalásaim (<span id="foglalasaim-tanulo-info"></span>)</h2>
+            <h2>Foglalások</h2>
             <div id="sajat-foglalasok" class="mt-3">
                 <!-- Saját foglalások ide töltődnek -->
             </div>
